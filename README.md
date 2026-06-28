@@ -1,4 +1,4 @@
-# micropubr <img src="man/figures/logo.png" align="right" height="120" alt="" />
+# micropubr
 
 > Publication-ready microbiome visualizations with one line of code.
 
@@ -101,6 +101,7 @@ The circular `circlize`-based figures (`mp_chord()`, `mp_circos()`) are not
 | `mp_network()` | Co-occurrence / correlation networks |
 | `mp_longitudinal()` | Spaghetti / trajectory / alluvial / horizon over time |
 | `mp_function()` | Functional pathway profiles (PICRUSt2 / HUMAnN) |
+| `mp_qc_profile()` | Per-cycle FASTQ read-quality profiles (DADA2 truncation) |
 | `mp_explore()` | Interactive Shiny explorer with reproducible code |
 
 Plus infrastructure: `mp_palette()`, `mp_theme_*()`, `mp_combine()`,

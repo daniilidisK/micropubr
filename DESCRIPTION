@@ -12,7 +12,7 @@ Description: A unified, opinionated interface for generating publication-ready
     longitudinal analyses. Every function returns a 'ggplot2' object with
     colourblind-safe defaults, automatic statistical overlays and
     auto-generated, reproducible figure captions.
-License: MIT + file LICENSE
+License: MIT
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -50,6 +50,7 @@ Suggests:
     circlize,
     indicspecies,
     permute,
+    ShortRead,
     plotly,
     htmlwidgets,
     Rsamtools,

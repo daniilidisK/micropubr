@@ -12,6 +12,12 @@
   circular `circlize`-based figures (`mp_chord()`, `mp_circos()`,
   `mp_coverage()`) are not ggplots and have no interactive mode. Requires the
   new (suggested) `plotly` package.
+* New `mp_qc_profile()`: per-cycle FASTQ read-quality profiles (the diagnostic
+  used to pick DADA2/QIIME 2 truncation lengths) as a frequency heatmap or a
+  mean ± inter-quartile ribbon, with mean/quartile overlays and a Q-score
+  reference line. Reads FASTQ via the lightweight `ShortRead` backend, or
+  accepts a pre-computed per-cycle data frame, and supports `interactive` and
+  `return.data` like the rest of the family.
 * `mp_export()` now saves an interactive widget to a self-contained `.html`
   page (via `htmlwidgets`) when given one.
 * Both vignettes gained a live "Interactive figures" section.
