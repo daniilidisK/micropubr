@@ -128,10 +128,12 @@ mp_diff(res, plot.type = "ma", label.top = 6)
 `mp_tree()` renders the tree with `ggtree`, optionally colouring tips by
 taxonomy and drawing an abundance ring. (Requires `ggtree`/`ggtreeExtra`.)
 
-```{r tree, fig.height = 6, eval = has_deps && requireNamespace("ggtree", quietly = TRUE)}
+Agglomerating to a rank and keeping the most abundant tips (`top.n`) keeps the
+tree and its colour legend legible:
+
+```{r tree, fig.height = 6, fig.width = 7.5, eval = has_deps && requireNamespace("ggtree", quietly = TRUE)}
 gp_phy <- phyloseq::tax_glom(gp, "Phylum")
-mp_tree(gp_phy, layout = "circular", color.by = "Phylum",
-        group.by = "SampleType")
+mp_tree(gp_phy, layout = "circular", color.by = "Phylum", top.n = 12)
 ```
 
 ## Co-occurrence networks
@@ -204,11 +206,11 @@ mp_ordination(gp, method = "PCoA", distance = "bray",
 ```
 
 ...and for composition bars, where each segment reports its taxon and relative
-abundance on hover:
+abundance on hover. (For interactive bars we leave `group.by` off: `plotly`
+crams faceted strip labels, so a single per-sample panel reads more clearly.)
 
 ```{r interactive-taxa, eval = has_plotly, fig.height = 5}
-mp_taxa(gp, tax.level = "Phylum", group.by = "SampleType", top.n = 8,
-        interactive = TRUE)
+mp_taxa(gp, tax.level = "Phylum", top.n = 8, interactive = TRUE)
 ```
 
 Multi-panel output (several measures, or `mp_combine()` figures) is assembled

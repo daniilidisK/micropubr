@@ -11,7 +11,9 @@ microbiome science.
 
 Every `mp_*()` function returns a plain
 [`ggplot2`](https://ggplot2.tidyverse.org/) object, so you keep full control:
-just add `+ theme(...)` or any other layer.
+just add `+ theme(...)` or any other layer. Pass `interactive = TRUE` to get a
+[`plotly`](https://plotly.com/r/) widget instead — same call, hover tooltips
+and zoom included.
 
 ## Why micropubr?
 
@@ -34,13 +36,13 @@ BiocManager::install("phyloseq")
 
 # micropubr (development version)
 # install.packages("remotes")
-remotes::install_github("kdaniilidis/micropubr")
+remotes::install_github("daniilidisK/micropubr")
 ```
 
-Optional features pull in additional packages on demand: `ggtree` /
-`ggtreeExtra` (trees), `ggraph` / `igraph` (networks), `ggalluvial`
-(longitudinal), `SpiecEasi` (network inference), `qiime2R` (import) and
-`shiny` (interactive explorer).
+Optional features pull in additional packages on demand: `plotly` /
+`htmlwidgets` (interactive plots), `ggtree` / `ggtreeExtra` (trees), `ggraph` /
+`igraph` (networks), `ggalluvial` (longitudinal), `SpiecEasi` (network
+inference), `qiime2R` (import) and `shiny` (interactive explorer).
 
 ## Quick start
 
@@ -67,6 +69,25 @@ fig <- mp_combine(
 )
 mp_export(fig, "figure1.pdf", column = "double", dpi = 600)
 ```
+
+## Interactive figures
+
+Add `interactive = TRUE` to any plotting function to get a live `plotly`
+widget — hover for tooltips, zoom and pan, and toggle groups via the legend.
+Multiple panels are linked into a single `plotly::subplot()`, and `mp_export()`
+saves the result to a self-contained HTML page.
+
+```r
+# An interactive ordination
+mp_ordination(GlobalPatterns, group.by = "SampleType", interactive = TRUE)
+
+# Save any interactive figure to a shareable web page
+w <- mp_alpha(GlobalPatterns, group.by = "SampleType", interactive = TRUE)
+mp_export(w, "alpha.html")
+```
+
+The circular `circlize`-based figures (`mp_chord()`, `mp_circos()`) are not
+`ggplot2` objects, so they have no interactive mode.
 
 ## The `mp_*()` family
 

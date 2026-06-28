@@ -34,7 +34,7 @@ BiocManager::install("phyloseq")
 
 # micropubr (development version)
 # install.packages("remotes")
-remotes::install_github("kdaniilidis/micropubr")
+remotes::install_github("daniilidisK/micropubr")
 ```
 
 Optional features pull in additional packages on demand: `ggtree` /

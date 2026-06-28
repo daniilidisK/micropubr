@@ -77,10 +77,13 @@ mp_varpart(gp, groups = list(
 ## Prevalence and the core microbiome
 
 `mp_prevalence()` draws a prevalence-abundance scatter (`"scatter"`) or a
-core-microbiome heatmap across detection thresholds (`"core"`).
+core-microbiome heatmap across detection thresholds (`"core"`). The core taxa
+are labelled automatically; pass `color.by` to colour points by a taxonomic
+rank when it has only a handful of levels (colouring by `"Phylum"` here would
+add a 60-entry legend, so we leave it off).
 
-```{r prevalence}
-mp_prevalence(gp, tax.level = "Phylum", color.by = "Phylum")
+```{r prevalence, fig.width = 7.5}
+mp_prevalence(gp, tax.level = "Phylum")
 ```
 
 ```{r prevalence-core, fig.height = 5}

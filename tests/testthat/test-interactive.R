@@ -37,6 +37,21 @@ test_that("multi-panel and patchwork inputs become a single interactive subplot"
   expect_s3_class(.mp_interactive(fig), "plotly")
 })
 
+test_that("a shared legend is shown once across subplot panels", {
+  skip_if_not_installed("patchwork")
+  ps <- make_test_ps()
+  w <- mp_alpha(ps, measure = c("Shannon", "Observed"), group.by = "Group",
+                interactive = TRUE)
+  built <- suppressWarnings(plotly::plotly_build(w))
+  shown <- vapply(built$x$data, function(tr) {
+    if (isTRUE(tr$showlegend) || is.null(tr$showlegend)) tr$name %||% NA_character_
+    else NA_character_
+  }, character(1))
+  shown <- shown[!is.na(shown)]
+  # Each group name should appear at most once in the legend, not once per panel.
+  expect_true(all(table(shown) == 1))
+})
+
 test_that("ggplot subtitle and caption survive the plotly conversion", {
   df <- make_da_df()
   w <- mp_diff(df, plot.type = "volcano", plot.title = "Title here",

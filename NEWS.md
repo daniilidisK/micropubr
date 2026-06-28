@@ -1,22 +1,20 @@
-# micropubr (development version)
+# micropubr 0.2.0
 
-* All ggplot-based plotting functions gained an `interactive` argument. With
+* New `interactive` argument on every ggplot-based plotting function. With
   `interactive = TRUE` they return a `plotly` widget instead of a static
   `ggplot`: hover tooltips, zoom/pan and legend toggling, with the ggplot
   subtitle and caption preserved. Multi-panel output (multiple measures or
-  `mp_combine()` figures) is assembled into a single `plotly::subplot()`.
-  Supported by `mp_alpha()`, `mp_ordination()`, `mp_taxa()`, `mp_diff()`,
-  `mp_longitudinal()`, `mp_function()`, `mp_network()`, `mp_tree()`,
-  `mp_dispersion()`, `mp_mantel()`, `mp_varpart()`, `mp_prevalence()`,
-  `mp_indicator()` and `mp_ml()`. The circular `circlize`-based figures
-  (`mp_chord()`, `mp_circos()`, `mp_coverage()`) are not ggplots and have no
-  interactive mode. Requires the new (suggested) `plotly` package.
+  `mp_combine()` figures) is assembled into a single `plotly::subplot()` with a
+  deduplicated shared legend. Supported by `mp_alpha()`, `mp_ordination()`,
+  `mp_taxa()`, `mp_diff()`, `mp_longitudinal()`, `mp_function()`,
+  `mp_network()`, `mp_tree()`, `mp_dispersion()`, `mp_mantel()`, `mp_varpart()`,
+  `mp_prevalence()`, `mp_indicator()`, `mp_ml()` and `mp_combine()`. The
+  circular `circlize`-based figures (`mp_chord()`, `mp_circos()`,
+  `mp_coverage()`) are not ggplots and have no interactive mode. Requires the
+  new (suggested) `plotly` package.
 * `mp_export()` now saves an interactive widget to a self-contained `.html`
   page (via `htmlwidgets`) when given one.
 * Both vignettes gained a live "Interactive figures" section.
-
-# micropubr 0.2.0
-
 * New `mp_ml()`: supervised machine learning (random forest and xgboost) for
   microbiome classification *and* regression, with k-fold cross-validation and
   `"importance"`, `"roc"`, `"confusion"` and `"prediction"` plots. Like the

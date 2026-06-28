@@ -72,7 +72,7 @@ Suggests:
     vdiffr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/kdaniilidis/micropubr
-BugReports: https://github.com/kdaniilidis/micropubr/issues
+URL: https://github.com/daniilidisK/micropubr
+BugReports: https://github.com/daniilidisK/micropubr/issues
 LazyData: true
 biocViews: Microbiome, Metagenomics, Visualization, Sequencing

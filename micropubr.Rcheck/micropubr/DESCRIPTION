@@ -28,8 +28,8 @@ Suggests: ape, Biostrings, picante, tidytree, ggtree, ggtreeExtra,
         (>= 3.0.0), vdiffr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/kdaniilidis/micropubr
-BugReports: https://github.com/kdaniilidis/micropubr/issues
+URL: https://github.com/daniilidisK/micropubr
+BugReports: https://github.com/daniilidisK/micropubr/issues
 biocViews: Microbiome, Metagenomics, Visualization, Sequencing
 NeedsCompilation: no
 Packaged: 2026-06-14 15:29:26 UTC; konstantinosdaniilidis

@@ -79,9 +79,33 @@
     suppressWarnings(plotly::ggplotly(p, tooltip = tooltip))
   })
   if (is.null(nrows)) nrows <- if (length(widgets) > 3) 2 else 1
-  plotly::subplot(widgets, nrows = nrows, margin = 0.06,
-                  titleX = TRUE, titleY = TRUE, shareX = FALSE,
-                  shareY = FALSE)
+  sub <- plotly::subplot(widgets, nrows = nrows, margin = 0.06,
+                         titleX = TRUE, titleY = TRUE, shareX = FALSE,
+                         shareY = FALSE)
+  # Each panel contributes its own legend entry per group; collapse the
+  # repeats so a shared grouping is listed only once.
+  .mp_dedupe_legend(sub)
+}
+
+#' Show each legend entry once, hiding later traces with a repeated name
+#'
+#' `plotly::subplot()` keeps one legend entry per panel, so a grouping shared
+#' across panels is listed N times. Keep the first occurrence of each name and
+#' hide the rest (matching how ggplot collects a single shared legend).
+#' @noRd
+.mp_dedupe_legend <- function(widget) {
+  seen <- character(0)
+  widget$x$data <- lapply(widget$x$data, function(tr) {
+    nm <- tr$name
+    if (is.null(nm) || isFALSE(tr$showlegend)) return(tr)
+    if (nm %in% seen) {
+      tr$showlegend <- FALSE
+    } else {
+      seen <<- c(seen, nm)
+    }
+    tr
+  })
+  widget
 }
 
 #' Re-attach a ggplot title/subtitle/caption that ggplotly() drops
