@@ -1,0 +1,38 @@
+Package: micropubr
+Title: Publication-Ready Microbiome Visualizations
+Version: 0.1.0
+Authors@R: 
+    person("Konstantinos", "Daniilidis", , "daniilidis@ieee.org", role = c("aut", "cre"))
+Description: A unified, opinionated interface for generating publication-ready
+    microbiome figures from 'phyloseq' objects with minimal code. Inspired by
+    the design philosophy of 'SCpubr' for single-cell transcriptomics,
+    'micropubr' provides a consistent family of 'mp_*()' functions covering
+    alpha diversity, beta diversity and ordination, taxonomic composition,
+    differential abundance, phylogenetic trees, co-occurrence networks and
+    longitudinal analyses. Every function returns a 'ggplot2' object with
+    colourblind-safe defaults, automatic statistical overlays and
+    auto-generated, reproducible figure captions.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends: R (>= 4.1.0)
+Imports: ggplot2 (>= 3.4.0), phyloseq, vegan, rstatix, ggpubr, ggrepel,
+        patchwork, rlang, grDevices, methods, stats, utils
+Suggests: ape, Biostrings, picante, tidytree, ggtree, ggtreeExtra,
+        ggraph, igraph, tidygraph, ggalluvial, treemapify, circlize,
+        indicspecies, permute, Rsamtools, GenomicAlignments,
+        GenomicRanges, IRanges, DESeq2, ANCOMBC, ALDEx2, SpiecEasi,
+        qiime2R, biomformat, TreeSummarizedExperiment,
+        SummarizedExperiment, shiny, miniUI, knitr, rmarkdown, testthat
+        (>= 3.0.0), vdiffr
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/kdaniilidis/micropubr
+BugReports: https://github.com/kdaniilidis/micropubr/issues
+biocViews: Microbiome, Metagenomics, Visualization, Sequencing
+NeedsCompilation: no
+Packaged: 2026-06-14 15:29:26 UTC; konstantinosdaniilidis
+Author: Konstantinos Daniilidis [aut, cre]
+Maintainer: Konstantinos Daniilidis <daniilidis@ieee.org>
+Built: R 4.5.2; ; 2026-06-14 15:29:49 UTC; unix

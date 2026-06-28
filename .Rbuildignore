@@ -1,0 +1,16 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.github$
+^\.claude$
+^\.DS_Store$
+\.DS_Store$
+^_pkgdown\.yml$
+^pkgdown$
+^docs$
+^LICENSE\.md$
+^cran-comments\.md$
+^\.lintr$
+^doc$
+^Meta$
+^micropubr\.Rcheck$
+^micropubr.*\.tar\.gz$

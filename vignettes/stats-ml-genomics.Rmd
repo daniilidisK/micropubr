@@ -1,0 +1,192 @@
+---
+title: "Statistics, machine learning and genomics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Statistics, machine learning and genomics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+has_deps <- requireNamespace("phyloseq", quietly = TRUE) &&
+  requireNamespace("vegan", quietly = TRUE)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 120,
+  eval = has_deps
+)
+```
+
+This vignette covers the **statistical**, **machine-learning** and **genomics**
+functions. Like the plotting family, the statistical and ML functions return a
+`ggplot` by default and a tidy data frame (with the fitted model attached as an
+attribute) when `return.data = TRUE`. For the figure functions see
+`vignette("visualization", package = "micropubr")`.
+
+```{r load}
+library(micropubr)
+data(GlobalPatterns, package = "phyloseq")
+gp <- phyloseq::prune_taxa(
+  phyloseq::taxa_sums(GlobalPatterns) > 5, GlobalPatterns)
+
+# GlobalPatterns has no numeric covariates; add a few synthetic ones so the
+# Mantel and variance-partitioning examples have something to chew on.
+set.seed(1)
+meta <- data.frame(phyloseq::sample_data(gp))
+meta$pH    <- round(runif(nrow(meta), 5, 8), 1)
+meta$Temp  <- round(runif(nrow(meta), 4, 37), 1)
+meta$Depth <- round(runif(nrow(meta), 0, 100), 1)
+phyloseq::sample_data(gp) <- phyloseq::sample_data(meta)
+```
+
+## Multivariate dispersion (PERMDISP)
+
+`mp_dispersion()` tests whether group dispersions (spread around the centroid)
+differ, the assumption behind PERMANOVA. Add ANOSIM/MRPP/PERMANOVA to the
+caption with `add.test`.
+
+```{r dispersion}
+mp_dispersion(gp, group.by = "SampleType", add.test = "permanova")
+```
+
+## Mantel test
+
+`mp_mantel()` correlates the community distance matrix with a distance built
+from numeric metadata.
+
+```{r mantel}
+mp_mantel(gp, vars = c("pH", "Temp", "Depth"), method = "spearman")
+```
+
+## Variance partitioning
+
+`mp_varpart()` partitions community variation among two or three explanatory
+sets (each a vector of metadata columns).
+
+```{r varpart, fig.height = 4}
+mp_varpart(gp, groups = list(
+  Chemistry = c("pH", "Temp"),
+  Habitat   = "SampleType"))
+```
+
+## Prevalence and the core microbiome
+
+`mp_prevalence()` draws a prevalence-abundance scatter (`"scatter"`) or a
+core-microbiome heatmap across detection thresholds (`"core"`).
+
+```{r prevalence}
+mp_prevalence(gp, tax.level = "Phylum", color.by = "Phylum")
+```
+
+```{r prevalence-core, fig.height = 5}
+mp_prevalence(gp, tax.level = "Phylum", plot.type = "core")
+```
+
+## Indicator species
+
+`mp_indicator()` finds taxa significantly associated with groups (via
+`indicspecies`). (Requires the `indicspecies` package.)
+
+```{r indicator, eval = has_deps && requireNamespace("indicspecies", quietly = TRUE)}
+mp_indicator(gp, group.by = "SampleType", tax.level = "Genus", top.n = 15)
+```
+
+## Differential abundance end to end
+
+`mp_run_da()` runs a two-group test and returns a tidy table that
+`mp_diff()` plots. The default `"wilcox"` method (Wilcoxon on centred
+log-ratios) needs no extra packages.
+
+```{r run-da, fig.height = 5}
+da <- mp_run_da(gp, group.by = "SampleType",
+                method = "wilcox", groups = c("Feces", "Soil"))
+mp_diff(da, plot.type = "volcano", label.top = 8)
+```
+
+`"deseq2"`, `"aldex2"` and `"ancombc"` wrap the respective Bioconductor
+packages when installed.
+
+## Machine learning
+
+`mp_ml()` trains a random forest (`"rf"`) or gradient-boosted trees (`"xgb"`)
+on the feature table. The task is detected from the response: a categorical
+`group.by` gives **classification**, a numeric one **regression**. (Requires
+`randomForest` or `xgboost`, and `pROC` for ROC curves.)
+
+```{r ml-import, fig.height = 5, eval = has_deps && requireNamespace("randomForest", quietly = TRUE)}
+gp_genus <- phyloseq::tax_glom(gp, "Genus")
+# Which genera discriminate sample types?
+mp_ml(gp_genus, group.by = "SampleType", method = "rf",
+      n.features = 15, seed = 1)
+```
+
+A two-class problem gives an ROC curve from out-of-fold predictions:
+
+```{r ml-roc, fig.height = 5, eval = has_deps && all(vapply(c("randomForest", "pROC"), requireNamespace, logical(1), quietly = TRUE))}
+two <- phyloseq::subset_samples(gp_genus, SampleType %in% c("Feces", "Soil"))
+mp_ml(two, group.by = "SampleType", plot.type = "roc", seed = 1)
+```
+
+A numeric response switches to regression, scored by RMSE / R-squared:
+
+```{r ml-reg, fig.height = 5, eval = has_deps && requireNamespace("randomForest", quietly = TRUE)}
+mp_ml(gp_genus, group.by = "pH", method = "rf",
+      plot.type = "prediction", seed = 1)
+```
+
+`return.data = TRUE` hands back the importance table with the fitted model,
+cross-validation predictions and metrics attached as attributes:
+
+```{r ml-data, eval = has_deps && requireNamespace("randomForest", quietly = TRUE)}
+imp <- mp_ml(gp_genus, group.by = "SampleType", return.data = TRUE, seed = 1)
+head(imp, 3)
+attr(imp, "metrics")$caption
+```
+
+## Coverage plots
+
+`mp_coverage()` draws sequencing depth across a genome from a data frame,
+`samtools depth`, bedGraph/BED files, or a BAM (via `Rsamtools`).
+
+```{r coverage}
+set.seed(1)
+cov <- data.frame(
+  contig = rep(c("contig1", "contig2"), each = 100),
+  position = rep(seq(1, 10000, length.out = 100), 2),
+  depth = c(rpois(100, 60), rpois(100, 25)))
+mp_coverage(cov, format = "data.frame")
+```
+
+## Circular genome plots
+
+`mp_circos()` assembles an ideogram with optional coverage, GC, heatmap and
+annotation tracks plus weighted ribbon links. (Requires `circlize`.)
+
+```{r circos, fig.height = 6, fig.width = 6, eval = has_deps && requireNamespace("circlize", quietly = TRUE)}
+genome <- data.frame(contig = c("c1", "c2", "c3"),
+                     length = c(8000, 5000, 3000))
+covc <- do.call(rbind, lapply(genome$contig, function(ct) {
+  L <- genome$length[genome$contig == ct]
+  data.frame(contig = ct, position = seq(1, L, 50),
+             value = runif(length(seq(1, L, 50)), 10, 90))
+}))
+links <- data.frame(contig1 = "c1", start1 = 500, end1 = 1500,
+                    contig2 = "c2", start2 = 1000, end2 = 2000,
+                    weight = 0.8)
+mp_circos(genome, coverage = covc, links = links, link.by = "weight",
+          coverage.type = "area")
+```
+
+## Chord diagrams
+
+`mp_chord()` links the top taxa to the levels of a grouping variable, ribbon
+width proportional to mean relative abundance. (Requires `circlize`.)
+
+```{r chord, fig.height = 6, fig.width = 6, eval = has_deps && requireNamespace("circlize", quietly = TRUE)}
+mp_chord(gp, group.by = "SampleType", tax.level = "Phylum", top.n = 10)
+```
