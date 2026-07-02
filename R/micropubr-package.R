@@ -3,9 +3,10 @@
 #' @description
 #' micropubr provides a unified, opinionated family of `mp_*()` functions that
 #' turn a [phyloseq::phyloseq] object into a publication-ready
-#' [ggplot2][ggplot2::ggplot] figure with a single call. It is designed in the
-#' spirit of `SCpubr` for single-cell transcriptomics: consistent arguments,
-#' colourblind-safe defaults, automatic statistical overlays and reproducible,
+#' [ggplot2][ggplot2::ggplot] figure with a single call. It applies one
+#' consistent design philosophy across the whole microbiome workflow: consistent
+#' arguments, colourblind-safe defaults, automatic statistical overlays and
+#' reproducible,
 #' auto-generated figure captions, while always returning a plain `ggplot`
 #' object you can extend with `+`.
 #'

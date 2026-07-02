@@ -8,9 +8,10 @@
 \description{
 micropubr provides a unified, opinionated family of \verb{mp_*()} functions that
 turn a \link[phyloseq:phyloseq]{phyloseq::phyloseq} object into a publication-ready
-\link[ggplot2:ggplot]{ggplot2} figure with a single call. It is designed in the
-spirit of \code{SCpubr} for single-cell transcriptomics: consistent arguments,
-colourblind-safe defaults, automatic statistical overlays and reproducible,
+\link[ggplot2:ggplot]{ggplot2} figure with a single call. It applies one
+consistent design philosophy across the whole microbiome workflow: consistent
+arguments, colourblind-safe defaults, automatic statistical overlays and
+reproducible,
 auto-generated figure captions, while always returning a plain \code{ggplot}
 object you can extend with \code{+}.
 }

@@ -4,8 +4,8 @@ Version: 0.2.0
 Authors@R:
     person("Konstantinos", "Daniilidis", , "daniilidis@ieee.org", role = c("aut", "cre"))
 Description: A unified, opinionated interface for generating publication-ready
-    microbiome figures from 'phyloseq' objects with minimal code. Inspired by
-    the design philosophy of 'SCpubr' for single-cell transcriptomics,
+    microbiome figures from 'phyloseq' objects with minimal code. Applying one
+    consistent design philosophy across the whole microbiome workflow,
     'micropubr' provides a consistent family of 'mp_*()' functions covering
     alpha diversity, beta diversity and ordination, taxonomic composition,
     differential abundance, phylogenetic trees, co-occurrence networks and

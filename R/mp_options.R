@@ -1,7 +1,7 @@
 # Global defaults and customizability layer ------------------------------
 # These let users set package-wide styling once (font size, palette, theme,
 # verbosity) instead of repeating the same arguments on every mp_*() call,
-# in the spirit of SCpubr's opinionated-but-overridable defaults.
+# following an opinionated-but-overridable defaults philosophy.
 
 #' Get, set and reset micropubr defaults
 #'
