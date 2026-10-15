@@ -1,9 +1,9 @@
 # Microbiome statistical analyses ----------------------------------------
 # Each public function runs a standard microbial-ecology test and returns a
 # publication-ready ggplot with the result baked into the caption, following
-# the same conventions as the other mp_*() functions. mp_run_da() is the
-# exception: it *runs* a differential-abundance method and returns a tidy
-# table for mp_diff().
+# the same conventions as the other mp_*() functions. (mp_run_da(), which
+# *runs* a differential-abundance method and returns a tidy table for
+# mp_diff(), lives in mp_da.R.)
 
 # --- Beta-dispersion and group-difference tests -------------------------
 
@@ -58,7 +58,7 @@ mp_dispersion <- function(object,
                           return.data = FALSE,
                           verbose = getOption("micropubr.verbose", FALSE)) {
   .mp_require("vegan", "Multivariate dispersion (PERMDISP)")
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   plot.type <- match.arg(plot.type)
   group.by <- .mp_check_var(object, group.by, "group.by", required = TRUE)
   theme <- .mp_theme(theme, font.size)
@@ -127,7 +127,16 @@ mp_dispersion <- function(object,
     ggplot2::labs(x = NULL, y = "Distance to group centroid",
                   title = plot.title, subtitle = plot.subtitle,
                   caption = caption) +
-    theme
+    theme +
+    .mp_rotate_x(levels(g), font.size)
+  p <- .mp_tag(p, "mp_dispersion",
+               params = list(distance = distance, group.by = group.by,
+                             permutations = permutations,
+                             add.test = add.test),
+               stats = list(F = fval, p = pval),
+               data = .mp_data_info(object, group.by),
+               notes = .mp_guard_groups(object, group.by),
+               packages = "vegan")
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }
@@ -210,7 +219,7 @@ mp_mantel <- function(object,
                       return.data = FALSE,
                       verbose = getOption("micropubr.verbose", FALSE)) {
   .mp_require("vegan", "Mantel test")
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   method <- match.arg(method)
   plot.type <- match.arg(plot.type)
   theme <- .mp_theme(theme, font.size)
@@ -243,6 +252,14 @@ mp_mantel <- function(object,
   mant <- vegan::mantel(d1, d2, method = method, permutations = permutations)
   rr <- mant$statistic
   pp <- mant$signif
+  tag <- function(p) {
+    .mp_tag(p, "mp_mantel",
+            params = list(distance = distance, method = method,
+                          permutations = permutations,
+                          vars = if (is.null(dist2)) num),
+            stats = list(r = rr, p = pp), data = .mp_data_info(object),
+            packages = "vegan")
+  }
   caption <- plot.caption %||% sprintf(
     "Mantel (%s): r = %.3f, p = %s (%d permutations)",
     method, rr, format.pval(pp, digits = 2), permutations)
@@ -271,6 +288,7 @@ mp_mantel <- function(object,
                     title = plot.title, subtitle = plot.subtitle,
                     caption = caption) +
       theme
+    p <- tag(p)
     if (isTRUE(interactive)) return(.mp_interactive(p))
     return(p)
   }
@@ -290,6 +308,7 @@ mp_mantel <- function(object,
                   title = plot.title, subtitle = plot.subtitle,
                   caption = caption) +
     theme
+  p <- tag(p)
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }
@@ -333,7 +352,7 @@ mp_varpart <- function(object,
                        return.data = FALSE,
                        verbose = getOption("micropubr.verbose", FALSE)) {
   .mp_require("vegan", "Variance partitioning")
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   if (!is.list(groups) || is.null(names(groups)) ||
       length(groups) < 2 || length(groups) > 3) {
     rlang::abort(
@@ -389,6 +408,8 @@ mp_varpart <- function(object,
                   caption = caption) +
     theme +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+  p <- .mp_tag(p, "mp_varpart", params = list(groups = groups),
+               data = .mp_data_info(object), packages = "vegan")
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }
@@ -439,7 +460,7 @@ mp_prevalence <- function(object,
                           interactive = FALSE,
                           return.data = FALSE,
                           verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   plot.type <- match.arg(plot.type)
   theme <- .mp_theme(theme, font.size)
 
@@ -454,12 +475,19 @@ mp_prevalence <- function(object,
                     mean_abundance = meanab, stringsAsFactors = FALSE)
   tab <- .mp_attach_taxonomy(tab, obj, tax.level, color.by)
 
+  tag <- function(p) {
+    .mp_tag(p, "mp_prevalence",
+            params = list(tax.level = tax.level, plot.type = plot.type,
+                          detection = detection, prevalence = prevalence),
+            data = .mp_data_info(object))
+  }
   if (plot.type == "core") {
     core_df <- .mp_core_grid(mat, prevalence)
     if (isTRUE(return.data)) return(core_df)
     ph <- .mp_core_heatmap(core_df, palette, theme, plot.title,
                            plot.subtitle, plot.caption, prevalence,
                            list(...))
+    ph <- tag(ph)
     if (isTRUE(interactive)) return(.mp_interactive(ph))
     return(ph)
   }
@@ -506,6 +534,7 @@ mp_prevalence <- function(object,
       size = font.size / 3.5, max.overlaps = 30, show.legend = FALSE,
       inherit.aes = TRUE)
   }
+  p <- tag(p)
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }
@@ -617,7 +646,7 @@ mp_indicator <- function(object,
                          return.data = FALSE,
                          verbose = getOption("micropubr.verbose", FALSE)) {
   .mp_require(c("indicspecies", "permute"), "Indicator species analysis")
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   group.by <- .mp_check_var(object, group.by, "group.by", required = TRUE)
   theme <- .mp_theme(theme, font.size)
 
@@ -668,6 +697,13 @@ mp_indicator <- function(object,
                     "Indicator species (p < %g, %d permutations).",
                     p.threshold, permutations)) +
     theme
+  p <- .mp_tag(p, "mp_indicator",
+               params = list(group.by = group.by, tax.level = tax.level,
+                             permutations = permutations,
+                             p.threshold = p.threshold),
+               data = .mp_data_info(object, group.by),
+               notes = .mp_guard_groups(object, group.by),
+               packages = "indicspecies")
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }
@@ -684,139 +720,4 @@ mp_indicator <- function(object,
     df$feature <- ifelse(is.na(lab), df$feature, as.character(lab))
   }
   df
-}
-
-# --- Run differential abundance -----------------------------------------
-
-#' Run a differential-abundance analysis from a phyloseq object
-#'
-#' Executes a two-group differential-abundance test and returns a tidy data
-#' frame (`feature`, `log2FC`, `pvalue`, `padj`, `mean`) ready to pass to
-#' [mp_diff()]. The default `"wilcox"` method (Wilcoxon test on centred
-#' log-ratios) needs no extra packages; `"deseq2"`, `"aldex2"` and `"ancombc"`
-#' wrap the respective Bioconductor packages.
-#'
-#' @param object A [phyloseq::phyloseq] object with counts.
-#' @param group.by Sample-metadata column defining the groups.
-#' @param method One of `"wilcox"`, `"deseq2"`, `"aldex2"`, `"ancombc"`.
-#' @param groups Optional length-2 vector naming the two groups to contrast
-#'   (reference first). Required when `group.by` has more than two levels.
-#' @param tax.level Optional rank to agglomerate to first.
-#' @param verbose Print the methods used.
-#'
-#' @return A data frame compatible with [mp_diff()].
-#' @export
-#' @examples
-#' \dontrun{
-#' data(GlobalPatterns, package = "phyloseq")
-#' res <- mp_run_da(GlobalPatterns, group.by = "SampleType",
-#'                  groups = c("Feces", "Soil"), method = "wilcox")
-#' mp_diff(res, plot.type = "volcano")
-#' }
-mp_run_da <- function(object,
-                      group.by = NULL,
-                      method = c("wilcox", "deseq2", "aldex2", "ancombc"),
-                      groups = NULL,
-                      tax.level = NULL,
-                      verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
-  method <- match.arg(method)
-  group.by <- .mp_check_var(object, group.by, "group.by", required = TRUE)
-  obj <- .mp_agglomerate(object, tax.level)
-  meta <- .mp_sample_data(obj)
-  lv <- levels(factor(meta[[group.by]]))
-  if (!is.null(groups)) {
-    if (length(groups) != 2 || !all(groups %in% lv)) {
-      rlang::abort("`groups` must name two levels of `group.by`.",
-                   class = "micropubr_bad_groups")
-    }
-    lv <- groups
-  } else if (length(lv) != 2) {
-    rlang::abort(
-      c(sprintf("`group.by` has %d levels; specify `groups` to pick two.",
-                length(lv)),
-        i = sprintf("Levels: %s.", paste(lv, collapse = ", "))),
-      class = "micropubr_need_groups")
-  }
-  if (verbose) {
-    rlang::inform(sprintf("mp_run_da(): %s, %s vs %s.",
-                          method, lv[1], lv[2]))
-  }
-  out <- switch(
-    method,
-    wilcox  = .mp_da_run_wilcox(obj, group.by, lv, tax.level),
-    deseq2  = .mp_da_run_deseq2(obj, group.by, lv),
-    aldex2  = .mp_da_run_aldex2(obj, group.by, lv),
-    ancombc = .mp_da_run_ancombc(obj, group.by, lv))
-  out[stats::complete.cases(out$log2FC), , drop = FALSE]
-}
-
-#' Wilcoxon test on CLR values (dependency-free default)
-#' @noRd
-.mp_da_run_wilcox <- function(object, group.by, lv, tax.level) {
-  clr <- .mp_clr(object)                                  # samples x taxa
-  rel <- .mp_otu_matrix(.mp_to_relative(object), samples_as_rows = TRUE)
-  meta <- .mp_sample_data(object)[rownames(clr), , drop = FALSE]
-  g <- meta[[group.by]]
-  keep <- g %in% lv & !is.na(g)
-  clr <- clr[keep, , drop = FALSE]
-  rel <- rel[keep, , drop = FALSE]
-  g <- factor(g[keep], levels = lv)
-  i1 <- g == lv[1]
-  i2 <- g == lv[2]
-  # log2 fold-change as the difference in mean CLR (natural log) over log(2).
-  l2fc <- (colMeans(clr[i2, , drop = FALSE]) -
-             colMeans(clr[i1, , drop = FALSE])) / log(2)
-  pv <- apply(clr, 2, function(x) tryCatch(
-    stats::wilcox.test(x[i1], x[i2])$p.value,
-    error = function(e) NA_real_))
-  out <- data.frame(feature = colnames(clr),
-                    log2FC = as.numeric(l2fc),
-                    pvalue = as.numeric(pv),
-                    padj = stats::p.adjust(pv, method = "BH"),
-                    mean = as.numeric(colMeans(rel)),
-                    stringsAsFactors = FALSE)
-  .mp_relabel_features(out, object, tax.level)
-}
-
-#' DESeq2 wrapper
-#' @noRd
-.mp_da_run_deseq2 <- function(object, group.by, lv) {
-  .mp_require("DESeq2", "DESeq2 differential abundance", bioc = TRUE)
-  sub <- phyloseq::prune_samples(
-    phyloseq::sample_data(object)[[group.by]] %in% lv, object)
-  phyloseq::sample_data(sub)[[group.by]] <-
-    factor(phyloseq::sample_data(sub)[[group.by]], levels = lv)
-  dds <- phyloseq::phyloseq_to_deseq2(
-    sub, stats::as.formula(sprintf("~ `%s`", group.by)))
-  dds <- DESeq2::DESeq(dds, quiet = TRUE)
-  res <- DESeq2::results(dds, contrast = c(group.by, lv[2], lv[1]))
-  .mp_parse_da(res)
-}
-
-#' ALDEx2 wrapper
-#' @noRd
-.mp_da_run_aldex2 <- function(object, group.by, lv) {
-  .mp_require("ALDEx2", "ALDEx2 differential abundance", bioc = TRUE)
-  meta <- .mp_sample_data(object)
-  g <- meta[[group.by]]
-  keep <- g %in% lv & !is.na(g)
-  counts <- .mp_otu_matrix(object, samples_as_rows = FALSE)[, keep,
-                                                            drop = FALSE]
-  conds <- as.character(g[keep])
-  ax <- ALDEx2::aldex(round(counts), conds, test = "t", effect = TRUE,
-                      verbose = FALSE)
-  ax$feature <- rownames(ax)
-  .mp_parse_da(ax)
-}
-
-#' ANCOM-BC wrapper
-#' @noRd
-.mp_da_run_ancombc <- function(object, group.by, lv) {
-  .mp_require("ANCOMBC", "ANCOM-BC differential abundance", bioc = TRUE)
-  sub <- phyloseq::prune_samples(
-    phyloseq::sample_data(object)[[group.by]] %in% lv, object)
-  res <- ANCOMBC::ancombc(data = sub, formula = group.by,
-                          group = group.by)
-  .mp_parse_da(res)
 }

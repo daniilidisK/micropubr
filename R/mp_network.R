@@ -64,7 +64,7 @@ mp_network <- function(object,
                        font.size = getOption("micropubr.font.size", 11),
                        interactive = FALSE,
                        verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   .mp_require(c("ggraph", "igraph"), "Network plots")
   method <- match.arg(method)
   layout <- match.arg(layout)
@@ -105,6 +105,13 @@ mp_network <- function(object,
   p <- .mp_network_plot(graph, layout, node.color.by, node.size.by,
                         edge.color.by, label.nodes, label.size, palette, theme,
                         plot.title, plot.subtitle, plot.caption)
+  p <- .mp_tag(p, "mp_network",
+               params = list(method = method, tax.level = tax.level,
+                             top.n = top.n, cor.threshold = cor.threshold,
+                             p.threshold = p.threshold,
+                             p.adjust.method = p.adjust.method),
+               data = .mp_data_info(object),
+               packages = c("igraph", "ggraph"))
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }

@@ -40,3 +40,15 @@ test_that("missing fold-change column is reported", {
   df <- data.frame(feature = "a", pvalue = 0.1, padj = 0.2)
   expect_error(micropubr:::.mp_parse_da(df), class = "micropubr_da_parse")
 })
+
+test_that("forest and dot plots keep the top.n most significant features", {
+  df <- make_da_df()
+  sig <- sum(mp_diff(df, return.data = TRUE)$direction != "NS")
+  for (type in c("forest", "dot")) {
+    p <- mp_diff(df, plot.type = type, top.n = 4)
+    expect_equal(nrow(p$data), 4, info = type)
+    expect_match(p$labels$caption,
+                 sprintf("Showing the 4 most significant of %d", sig))
+  }
+  expect_equal(nrow(mp_diff(df, plot.type = "forest", top.n = 100)$data), sig)
+})

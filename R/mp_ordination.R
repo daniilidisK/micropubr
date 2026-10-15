@@ -86,7 +86,7 @@ mp_ordination <- function(object,
                           interactive = FALSE,
                           return.data = FALSE,
                           verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   method <- match.arg(method)
   ellipse.type <- match.arg(ellipse.type)
   group.by <- .mp_check_var(object, group.by, "group.by")
@@ -152,9 +152,10 @@ mp_ordination <- function(object,
     cols <- .mp_resolve_palette(palette, ng, type = "qualitative")
     p <- p + ggplot2::scale_colour_manual(values = cols, name = group.by)
     if (ellipse && ng >= 2) {
-      # stat_ellipse needs >= 3 points per group; restrict to those groups
-      # to avoid noisy "Too few points" warnings.
-      big <- names(which(table(df[[group.by]]) >= 3))
+      # stat_ellipse needs >= 4 points per group (it estimates a covariance
+      # with n - 1 >= 3 df); restrict to those groups to avoid noisy
+      # "Too few points" messages.
+      big <- names(which(table(df[[group.by]]) >= 4))
       ell_df <- df[df[[group.by]] %in% big, , drop = FALSE]
       if (nrow(ell_df) > 0) {
         p <- p + ggplot2::stat_ellipse(
@@ -196,6 +197,27 @@ mp_ordination <- function(object,
 
   p <- p + ggplot2::labs(title = plot.title, subtitle = plot.subtitle,
                          caption = caption)
+
+  # PERMANOVA assumes equal dispersions; check it whenever PERMANOVA ran.
+  disp <- if (!is.null(perm)) {
+    .mp_guard_dispersion(ord$dist, meta, group.by, permutations)
+  }
+  p <- .mp_tag(
+    p, "mp_ordination",
+    params = list(method = method, distance = distance, group.by = group.by,
+                  permutations = permutations, constraints = constraints,
+                  envfit = envfit),
+    stats = list(
+      permanova = if (!is.null(perm)) list(R2 = perm$model$R2[1],
+                                           F = perm$model$F[1],
+                                           p = perm$model$`Pr(>F)`[1]),
+      permdisp_p = disp$p),
+    data = .mp_data_info(object, group.by),
+    notes = c(if (!is.null(perm)) .mp_guard_groups(object, group.by),
+              disp$note),
+    packages = c("phyloseq",
+                 if (!is.null(perm) || method %in% c("NMDS", "RDA", "CCA",
+                                                     "dbRDA")) "vegan"))
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }
@@ -241,7 +263,10 @@ mp_ordination <- function(object,
   cmd <- stats::cmdscale(d, k = k, eig = TRUE)
   pts <- cmd$points[, axes, drop = FALSE]
   eig <- cmd$eig
-  pct <- 100 * eig / sum(eig[eig > 0])
+  # Relative to the sum of all eigenvalues, as ape::pcoa() and phyloseq
+  # report it, so axis labels match what users see elsewhere when a
+  # non-Euclidean distance produces negative eigenvalues.
+  pct <- 100 * eig / sum(eig)
   lab <- sprintf("PCoA%d (%.1f%%)", axes, pct[axes])
   scores <- as.data.frame(pts)
   names(scores) <- lab

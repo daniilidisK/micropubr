@@ -37,3 +37,28 @@ test_that("themes are ggplot theme objects", {
 test_that("mp_theme_publication honours grid argument", {
   expect_s3_class(mp_theme_publication(grid = "both"), "theme")
 })
+
+test_that("mp_darken recolours without undoing the figure's layout", {
+  ps <- make_test_ps()
+  light <- mp_taxa(ps, tax.level = "Phylum", group.by = "Group")
+  dark <- mp_darken(light)
+  th <- ggplot2::theme_get() + dark$theme
+  # Rotated sample labels survive; no grid lines appear.
+  expect_equal(ggplot2::calc_element("axis.text.x.bottom", th)$angle,
+               ggplot2::calc_element("axis.text.x.bottom",
+                                     ggplot2::theme_get() + light$theme)$angle)
+  expect_s3_class(ggplot2::calc_element("panel.grid.major.x", th),
+                  "element_blank")
+  expect_equal(ggplot2::calc_element("plot.background", th)$fill, "#1B1B1B")
+
+  # A fixed black label layer becomes light, and the original is untouched.
+  df <- make_da_df()
+  p <- mp_diff(df, plot.type = "volcano")
+  labels <- function(x) Filter(function(l) inherits(l$geom, "GeomTextRepel"),
+                               x$layers)[[1]]
+  expect_equal(labels(mp_darken(p))$aes_params$colour, "grey90")
+  expect_equal(labels(p)$aes_params$colour, "black")
+  expect_s3_class(mp_darken(mp_alpha(ps, measure = c("Shannon", "Observed"),
+                                     group.by = "Group")), "patchwork")
+  expect_error(mp_darken("x"), class = "micropubr_bad_input")
+})

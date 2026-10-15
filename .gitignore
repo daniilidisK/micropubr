@@ -5,3 +5,7 @@
 *.tar.gz
 
 tutorial/
+paper/
+webapp/
+# R CMD check output
+*.Rcheck/

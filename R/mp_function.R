@@ -91,6 +91,8 @@ mp_function <- function(object,
     ggplot2::labs(title = plot.title, subtitle = plot.subtitle,
                   caption = plot.caption %||%
                     sprintf("Top %d pathways by mean abundance.", length(keep)))
+  p <- .mp_tag(p, "mp_function",
+               params = list(plot.type = plot.type, top.n = top.n))
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }

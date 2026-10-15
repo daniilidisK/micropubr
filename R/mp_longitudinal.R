@@ -53,7 +53,7 @@ mp_longitudinal <- function(object,
                             font.size = getOption("micropubr.font.size", 11),
                             interactive = FALSE,
                             verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   plot.type <- match.arg(plot.type)
   time.var <- .mp_check_var(object, time.var, "time.var", required = TRUE)
   subject.var <- .mp_check_var(object, subject.var, "subject.var",
@@ -80,6 +80,12 @@ mp_longitudinal <- function(object,
   p <- p + theme +
     ggplot2::labs(title = plot.title, subtitle = plot.subtitle,
                   caption = plot.caption)
+  p <- .mp_tag(p, "mp_longitudinal",
+               params = list(plot.type = plot.type, time.var = time.var,
+                             subject.var = subject.var, group.by = group.by,
+                             measure = measure, distance = distance,
+                             tax.level = tax.level, top.n = top.n),
+               data = .mp_data_info(object, group.by))
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }

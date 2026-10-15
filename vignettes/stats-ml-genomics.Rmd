@@ -101,18 +101,76 @@ mp_indicator(gp, group.by = "SampleType", tax.level = "Genus", top.n = 15)
 
 ## Differential abundance end to end
 
-`mp_run_da()` runs a two-group test and returns a tidy table that
-`mp_diff()` plots. The default `"wilcox"` method (Wilcoxon on centred
-log-ratios) needs no extra packages.
+`mp_run_da()` tests every taxon for a difference between groups and returns a
+tidy table that `mp_diff()` plots. The default `"wilcox"` method (Wilcoxon on
+centred log-ratios) needs no extra packages.
 
 ```{r run-da, fig.height = 5}
 da <- mp_run_da(gp, group.by = "SampleType",
-                method = "wilcox", groups = c("Feces", "Soil"))
+                method = "wilcox", groups = c("Feces", "Soil"),
+                tax.level = "Genus")
 mp_diff(da, plot.type = "volcano", label.top = 8)
 ```
 
-`"deseq2"`, `"aldex2"` and `"ancombc"` wrap the respective Bioconductor
-packages when installed.
+### Several groups, several methods
+
+Leave out `groups` and every level is compared with a `reference` (or every
+pair, with `pairwise = TRUE`). Methods are known to disagree, so run more than
+one on the same design and look at where they agree. `"lm"` fits a linear model
+to the CLR values and, unlike the Wilcoxon test, can adjust for covariates
+(`adjust`) and model repeated measures (`random`).
+
+```{r da-multi, fig.height = 6}
+three <- phyloseq::subset_samples(gp, SampleType %in% c("Feces", "Skin", "Tongue"))
+da3 <- mp_run_da(three, group.by = "SampleType", reference = "Skin",
+                 method = c("wilcox", "lm"), adjust = "pH",
+                 tax.level = "Phylum")
+head(da3)
+mp_diff(da3, plot.type = "heatmap")
+```
+
+```{r da-consensus, fig.height = 6}
+mp_diff(da3, plot.type = "consensus", fc.threshold = 0.5)
+```
+
+The consensus table behind the figure is available too:
+
+```{r da-consensus-table}
+head(mp_diff(da3, plot.type = "consensus", return.data = TRUE))
+```
+
+`"ancombc2"` (ANCOM-BC2, which corrects for sample-specific sampling
+fractions), `"deseq2"` and `"aldex2"` wrap the respective Bioconductor
+packages when they are installed. ANCOM-BC2 also reports taxa that are
+structurally absent from a group (`plot.type = "zeros"`) and whether each
+result survives its pseudo-count sensitivity analysis (the `robust` column;
+non-robust results are drawn as open symbols).
+
+```{r da-ancombc2, fig.height = 6, eval = has_deps && requireNamespace("ANCOMBC", quietly = TRUE)}
+da_bc <- mp_run_da(three, group.by = "SampleType", reference = "Skin",
+                   method = c("lm", "ancombc2"), tax.level = "Phylum")
+mp_diff(da_bc, plot.type = "zeros")
+```
+
+## Methods text and statistical guardrails
+
+Every figure records the analysis behind it. `mp_methods()` turns those records
+into a methods paragraph with software versions and references, and lists any
+statistical caveats raised while the figures were made -- here, that the
+groups are small:
+
+```{r methods}
+p_alpha <- mp_alpha(gp, measure = "Shannon", group.by = "SampleType",
+                    test = "kruskal")
+p_diff <- mp_diff(da3, plot.type = "heatmap")
+mp_methods(p_alpha, p_diff)
+```
+
+`mp_alt_text()` describes a figure for readers who cannot see it:
+
+```{r alt-text}
+mp_alt_text(p_alpha)
+```
 
 ## Machine learning
 

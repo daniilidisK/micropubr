@@ -18,7 +18,7 @@
 #' p <- mp_explore(GlobalPatterns)
 #' }
 mp_explore <- function(object) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   .mp_require(c("shiny", "miniUI"), "Interactive exploration")
 
   vars <- c("(none)", phyloseq::sample_variables(object))

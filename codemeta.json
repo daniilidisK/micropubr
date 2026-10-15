@@ -1,0 +1,185 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "identifier": "micropubr",
+  "name": "micropubr: Publication-Ready Microbiome Visualizations",
+  "description": "A unified, opinionated interface for generating publication-ready microbiome figures from 'phyloseq' objects with minimal code. Applying one consistent design philosophy across the whole microbiome workflow, 'micropubr' provides a consistent family of 'mp_*()' functions covering alpha diversity, beta diversity and ordination, taxonomic composition, differential abundance, phylogenetic trees, co-occurrence networks and longitudinal analyses. Every function returns a 'ggplot2' object with colourblind-safe defaults, automatic statistical overlays and auto-generated, reproducible figure captions.",
+  "version": "0.3.0",
+  "license": "https://spdx.org/licenses/MIT",
+  "codeRepository": "https://github.com/daniilidisK/micropubr",
+  "issueTracker": "https://github.com/daniilidisK/micropubr/issues",
+  "url": "https://daniilidisk.github.io/micropubr/",
+  "readme": "https://github.com/daniilidisK/micropubr/blob/main/README.md",
+  "developmentStatus": "https://lifecycle.r-lib.org/articles/stages.html#experimental",
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "R",
+    "url": "https://r-project.org"
+  },
+  "runtimePlatform": "R (>= 4.1.0)",
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Konstantinos",
+      "familyName": "Daniilidis",
+      "email": "daniilidis@ieee.org"
+    }
+  ],
+  "maintainer": [
+    {
+      "@type": "Person",
+      "givenName": "Konstantinos",
+      "familyName": "Daniilidis",
+      "email": "daniilidis@ieee.org"
+    }
+  ],
+  "copyrightHolder": [
+    {
+      "@type": "Person",
+      "givenName": "Konstantinos",
+      "familyName": "Daniilidis"
+    }
+  ],
+  "keywords": [
+    "Microbiome",
+    "Metagenomics",
+    "Visualization",
+    "Sequencing",
+    "data visualization",
+    "R",
+    "ggplot2",
+    "reproducibility",
+    "amplicon sequencing",
+    "phyloseq"
+  ],
+  "softwareRequirements": [
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "R",
+      "name": "R",
+      "version": ">= 4.1.0"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "ggplot2",
+      "name": "ggplot2",
+      "version": ">= 3.4.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=ggplot2"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "phyloseq",
+      "name": "phyloseq",
+      "provider": {
+        "@id": "https://www.bioconductor.org",
+        "@type": "Organization",
+        "name": "Bioconductor",
+        "url": "https://www.bioconductor.org"
+      },
+      "sameAs": "https://bioconductor.org/packages/release/bioc/html/phyloseq.html"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "vegan",
+      "name": "vegan",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=vegan"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "rstatix",
+      "name": "rstatix",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rstatix"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "ggpubr",
+      "name": "ggpubr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=ggpubr"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "ggrepel",
+      "name": "ggrepel",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=ggrepel"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "patchwork",
+      "name": "patchwork",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=patchwork"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "rlang",
+      "name": "rlang",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rlang"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "grDevices",
+      "name": "grDevices"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "graphics",
+      "name": "graphics"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "methods",
+      "name": "methods"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "stats",
+      "name": "stats"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "utils",
+      "name": "utils"
+    }
+  ]
+}

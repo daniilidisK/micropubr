@@ -120,6 +120,7 @@ mp_qc_profile <- function(x,
                   caption = caption) +
     theme
   if (length(files) < 2) p <- p + ggplot2::theme(legend.position = "right")
+  p <- .mp_tag(p, "mp_qc_profile", params = list(plot.type = plot.type))
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }

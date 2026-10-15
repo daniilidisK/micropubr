@@ -6,7 +6,8 @@
 \usage{
 mp_diff(
   result,
-  plot.type = c("volcano", "ma", "forest", "dot", "concordance"),
+  plot.type = c("volcano", "ma", "forest", "dot", "heatmap", "consensus", "zeros",
+    "concordance"),
   fc.threshold = 1,
   p.threshold = 0.05,
   y.value = c("padj", "pvalue"),
@@ -16,6 +17,9 @@ mp_diff(
   color.ns = "grey75",
   result2 = NULL,
   method.names = c("Method 1", "Method 2"),
+  contrast = NULL,
+  robust.only = TRUE,
+  top.n = 30,
   feature = NULL,
   log2fc = NULL,
   pvalue = NULL,
@@ -34,12 +38,17 @@ mp_diff(
 )
 }
 \arguments{
-\item{result}{A differential-abundance result: a \code{DESeqResults} object, an
-\code{ALDEx2} data frame, an \code{ANCOM-BC(2)} result list, or a generic data
-frame (see \code{feature}/\code{log2fc}/\code{pvalue}/\code{padj}).}
+\item{result}{A differential-abundance result: the output of
+\code{\link[=mp_run_da]{mp_run_da()}}, a \code{DESeqResults} object, an \code{ALDEx2} data frame, an
+\code{ANCOM-BC(2)} result list, a generic data frame (see
+\code{feature}/\code{log2fc}/\code{pvalue}/\code{padj}), or a named list of any of these
+(one per method, e.g. \code{list(DESeq2 = res1, ALDEx2 = res2)}).}
 
-\item{plot.type}{One of \code{"volcano"}, \code{"ma"}, \code{"forest"}, \code{"dot"} or
-\code{"concordance"}.}
+\item{plot.type}{One of \code{"volcano"}, \code{"ma"}, \code{"forest"}, \code{"dot"},
+\code{"heatmap"} (fold change of significant taxa across contrasts),
+\code{"consensus"} (agreement across methods), \code{"zeros"} (ANCOM-BC2
+structural zeros) or \code{"concordance"} (fold changes of two methods
+against each other).}
 
 \item{fc.threshold}{Absolute log2 fold-change cut-off for significance.}
 
@@ -48,16 +57,30 @@ frame (see \code{feature}/\code{log2fc}/\code{pvalue}/\code{padj}).}
 \item{y.value}{For volcano plots, plot \code{-log10()} of \code{"padj"} (default) or
 \code{"pvalue"} on the y-axis.}
 
-\item{label.top}{Number of most-significant features to label.}
+\item{label.top}{Number of most-significant features to label per panel.}
 
 \item{color.up, color.down, color.ns}{Colours for enriched, depleted and
 non-significant features.}
 
 \item{result2}{A second result (same parsing rules) for
-\code{plot.type = "concordance"}.}
+\code{plot.type = "concordance"}. Not needed when \code{result} already holds
+exactly two methods.}
 
 \item{method.names}{Length-2 labels for the two methods in a concordance
 plot.}
+
+\item{contrast}{Optional character vector of contrasts (as in the
+\code{contrast} column, e.g. \code{"Treatment vs Control"}, or an ANCOM-BC2 term
+such as \code{"groupTreatment"}) to keep.}
+
+\item{robust.only}{Treat significant features that fail ANCOM-BC2's
+pseudo-count sensitivity analysis as not significant (the default, which
+matches ANCOM-BC2's \code{diff_robust}). Results without sensitivity
+information are unaffected.}
+
+\item{top.n}{Maximum number of features in forest, dot, heatmap and
+consensus plots (the most significant are kept; per panel for forest and
+dot plots).}
 
 \item{feature, log2fc, pvalue, padj, mean, lfcSE}{Optional column-name overrides
 when \code{result} is a generic data frame.}
@@ -75,7 +98,8 @@ when \code{result} is a generic data frame.}
 of a static \code{ggplot} (requires \code{plotly}). See \code{\link[=mp_alpha]{mp_alpha()}}.}
 
 \item{return.data}{If \code{TRUE}, return the parsed differential-abundance
-data frame (with a \code{direction} column) instead of a plot.}
+data frame (with a \code{direction} column) instead of a plot; for
+\code{plot.type = "consensus"}, the per-feature consensus table.}
 
 \item{verbose}{Print the detected result type and counts.}
 }
@@ -84,11 +108,24 @@ A \code{ggplot} object, a \code{plotly} widget when \code{interactive = TRUE}, o
 data frame when \code{return.data = TRUE}.
 }
 \description{
-Visualises the output of a differential-abundance analysis as a volcano,
-MA, forest or ranked-dot plot, or compares two analyses with a concordance
-plot. Results from \code{DESeq2}, \code{ALDEx2} and \code{ANCOM-BC}/\code{ANCOM-BC2} are parsed
-automatically; any other tool can be supplied as a data frame with explicit
-column mappings.
+Visualises differential-abundance results as a volcano, MA, forest or
+ranked-dot plot, as a heatmap of fold changes across contrasts, or -- when
+several methods were run -- as a consensus matrix showing where the methods
+agree. Results from \code{\link[=mp_run_da]{mp_run_da()}}, \code{DESeq2}, \code{ALDEx2} and
+\code{ANCOM-BC}/\code{ANCOM-BC2} are parsed automatically; any other tool can be
+supplied as a data frame with explicit column mappings, and a named list of
+results from different tools is stacked for comparison.
+}
+\details{
+Results with several contrasts (multi-group designs) or several methods are
+drawn as facets. ANCOM-BC(2) fold changes, which are natural logarithms,
+are converted to log2. Taxa that ANCOM-BC2 classifies as structural zeros
+(absent from a whole group) are not tested; they are counted in the
+subtitle and shown by \code{plot.type = "zeros"}. When results carry ANCOM-BC2's
+pseudo-count sensitivity analysis, taxa that fail it are not counted as
+significant (as in ANCOM-BC2's own \code{diff_robust} output); they are counted in
+the subtitle and marked in heatmaps. With \code{robust.only = FALSE} they are
+kept and drawn as open symbols.
 }
 \examples{
 df <- data.frame(
@@ -98,4 +135,7 @@ df <- data.frame(
   padj = p.adjust(runif(50)^2, "BH")
 )
 mp_diff(df, plot.type = "volcano")
+}
+\seealso{
+\code{\link[=mp_run_da]{mp_run_da()}} to run the analysis.
 }

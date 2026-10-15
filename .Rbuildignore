@@ -14,3 +14,9 @@
 ^Meta$
 ^micropubr\.Rcheck$
 ^micropubr.*\.tar\.gz$
+^webapp$
+^tutorial$
+^paper$
+^codemeta\.json$
+^CONTRIBUTING\.md$
+^Rplots\.pdf$

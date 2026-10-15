@@ -16,6 +16,15 @@
 #' @param theme A `ggplot2` theme object used whenever a function's `theme`
 #'   argument is `NULL`. If `NULL`, [mp_theme_publication()] is used.
 #' @param verbose Logical; print the underlying method and parameters.
+#' @param guardrails How statistical caveats are reported: `"warn"` (the
+#'   default) raises a warning of class `micropubr_guardrail`, `"caption"`
+#'   appends a "Note:" line to the figure caption, `"off"` stays silent. The
+#'   caveats are recorded either way and listed by [mp_methods()]. They flag
+#'   group sizes below 5, richness compared across more than 10-fold
+#'   differences in sequencing depth, a significant PERMANOVA accompanied by
+#'   unequal dispersions (PERMDISP), differential-abundance methods that
+#'   ignored the requested covariates, and covariates so strongly associated
+#'   with the grouping that adjusting for them is unstable.
 #'
 #' @return `mp_get_defaults()` returns the current defaults as a named list;
 #'   `mp_set_defaults()` and `mp_reset_defaults()` return the (updated)
@@ -27,7 +36,7 @@
 #' mp_get_defaults()
 #' mp_reset_defaults()
 mp_set_defaults <- function(font.size = NULL, palette = NULL, theme = NULL,
-                            verbose = NULL) {
+                            verbose = NULL, guardrails = NULL) {
   if (!is.null(font.size)) {
     if (!is.numeric(font.size) || length(font.size) != 1) {
       rlang::abort("`font.size` must be a single number.",
@@ -44,6 +53,14 @@ mp_set_defaults <- function(font.size = NULL, palette = NULL, theme = NULL,
     options(micropubr.theme = theme)
   }
   if (!is.null(verbose)) options(micropubr.verbose = isTRUE(verbose))
+  if (!is.null(guardrails)) {
+    if (!is.character(guardrails) || length(guardrails) != 1 ||
+        !guardrails %in% c("warn", "caption", "off")) {
+      rlang::abort("`guardrails` must be one of \"warn\", \"caption\" or \"off\".",
+                   class = "micropubr_bad_default")
+    }
+    options(micropubr.guardrails = guardrails)
+  }
   invisible(mp_get_defaults())
 }
 
@@ -54,7 +71,8 @@ mp_get_defaults <- function() {
     font.size = getOption("micropubr.font.size", 11),
     palette   = getOption("micropubr.palette", NULL),
     theme     = getOption("micropubr.theme", NULL),
-    verbose   = getOption("micropubr.verbose", FALSE)
+    verbose   = getOption("micropubr.verbose", FALSE),
+    guardrails = getOption("micropubr.guardrails", "warn")
   )
 }
 
@@ -62,7 +80,8 @@ mp_get_defaults <- function() {
 #' @export
 mp_reset_defaults <- function() {
   options(micropubr.font.size = 11, micropubr.palette = NULL,
-          micropubr.theme = NULL, micropubr.verbose = FALSE)
+          micropubr.theme = NULL, micropubr.verbose = FALSE,
+          micropubr.guardrails = "warn")
   invisible(mp_get_defaults())
 }
 

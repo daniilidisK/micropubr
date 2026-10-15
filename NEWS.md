@@ -1,3 +1,99 @@
+# micropubr 0.3.0
+
+## Differential abundance
+
+* `mp_run_da()` is rebuilt around one shared design for every method:
+  * several methods in one call (`method = c("wilcox", "lm", "ancombc2")`),
+    returned as one long table with `method` and `contrast` columns;
+  * multi-group designs: every level against `reference`, or all pairs with
+    `pairwise = TRUE` (previously only two groups);
+  * covariate adjustment with `adjust` and repeated measures with `random`;
+  * a common prevalence filter (`prevalence = 0.1`) and multiple-testing
+    correction (`p.adjust.method`);
+  * new engines `"lm"` (linear model on CLR values; linear mixed model via
+    `lmerTest` with `random`) and `"ancombc2"` (ANCOM-BC2, with structural
+    zeros and the pseudo-count sensitivity flag in the new `robust` column).
+    `"ancombc"` is now an alias of `"ancombc2"`;
+  * DESeq2 now uses `poscounts` size factors, so sparse tables no longer fail.
+* `mp_diff()` gains `plot.type = "heatmap"` (fold changes across contrasts),
+  `"consensus"` (agreement across methods), and `"zeros"` (structural zeros),
+  plus `contrast`, `robust.only` and `top.n` arguments. Multi-contrast and
+  multi-method results are faceted. ANCOM-BC2 results that fail its
+  pseudo-count sensitivity analysis are not counted as significant by default
+  (`robust.only = TRUE`, matching ANCOM-BC2's `diff_robust`): in a confounding
+  simulation on real counts nearly all of ANCOM-BC2's false positives failed
+  that analysis. A named list of results is stacked for
+  comparison, and `"concordance"` works on a single two-method result.
+* Forest and dot plots now draw the `top.n` most significant features (default
+  30; per panel when faceted) instead of every significant one, and say in the
+  caption how many are shown; their legends no longer list "NS".
+
+## Bug fixes
+
+* ANCOM-BC2 results were plotted from the intercept column (`lfc_(Intercept)`)
+  rather than the group effect, and on a log2 axis although ANCOM-BC estimates
+  are natural logarithms. Both are fixed, and covariate terms are no longer
+  mistaken for group contrasts.
+* Results from the original `ANCOMBC::ancombc()` (whose `res` is a list of
+  tables) could not be parsed; `mp_run_da(method = "ancombc")` failed for the
+  same reason and also ignored the requested reference group.
+* ALDEx2 results were plotted using the standardised `effect` size instead of
+  the log2 difference `diff.btw`.
+* `mp_ordination()` drew ellipses for groups of three samples, which
+  `stat_ellipse()` cannot estimate; it now needs four.
+* Composition plots (`mp_taxa()`, `mp_chord()`, `mp_longitudinal()`) folded
+  abundant taxa that are unassigned at the plotted rank into "Other", so fewer
+  than `top.n` taxa were shown. They are now kept and labelled by their deepest
+  assigned rank (e.g. "Unassigned Lachnospiraceae").
+* Group-comparison p-values (Wilcoxon, t-test, Kruskal-Wallis, ANOVA, Tukey
+  HSD) were taken from `rstatix`, which rounds them to three significant
+  digits before micropubr adjusted and printed them. They are now computed
+  exactly with `stats`.
+* PCoA axis percentages are now relative to the sum of all eigenvalues, as in
+  `ape::pcoa()` and `phyloseq`, so labels match when negative eigenvalues occur.
+* `mp_dispersion()` rotates long group labels, and `mp_taxa()` wraps long facet
+  labels instead of truncating them.
+* README: the `mp_import_qiime2()` example used a non-existent argument.
+
+## Reporting and reproducibility
+
+* New `mp_methods()`: a methods paragraph, software versions, references and
+  statistical notes, generated from the provenance every figure now records.
+* New `mp_alt_text()`: accessible alt text for any micropubr figure.
+* Statistical guardrails flag small groups, richness compared across very
+  uneven sequencing depths, PERMANOVA with unequal dispersions (PERMDISP is now
+  run alongside every PERMANOVA in `mp_ordination()`), methods that ignored
+  the requested covariates, and covariates so strongly associated with the
+  grouping (Cramer's V >= 0.7, or R-squared >= 0.5) that adjusting for them is
+  unstable. Control them with
+  `mp_set_defaults(guardrails = "warn" | "caption" | "off")`.
+
+## Themes
+
+* New `mp_darken()` recolours a finished figure for a dark background while
+  keeping its layout. Adding `mp_theme_dark()` to a finished plot replaces the
+  whole theme, which undid rotated axis labels and facet strips and left labels
+  and significance brackets drawn in black invisible.
+* Composition and differential-abundance labels no longer treat placeholders
+  such as MGnify's "Root" or QIIME's "Unassigned" as taxon names.
+* `mp_methods(format = "list")` now returns the paragraph without its software
+  sentence, plus `versions` and `citations`, so figures described one at a time
+  can share a single software sentence.
+
+## Interoperability
+
+* Every `mp_*()` function accepts a `TreeSummarizedExperiment` (or
+  `SummarizedExperiment`), and the new `mp_as_phyloseq()` converts one
+  explicitly, including its row tree.
+
+## Infrastructure
+
+* Statistical equivalence tests against `vegan`, `phyloseq` and `stats`,
+  fixture-based tests for real ANCOM-BC/ANCOM-BC2 output, and `vdiffr` visual
+  regression tests.
+* GitHub Actions for R CMD check, test coverage, BiocCheck and the pkgdown
+  site; `inst/CITATION` and `codemeta.json`.
+
 # micropubr 0.2.0
 
 * New `interactive` argument on every ggplot-based plotting function. With

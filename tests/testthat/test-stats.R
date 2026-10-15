@@ -68,25 +68,6 @@ test_that("mp_prevalence draws scatter and core plots", {
   expect_true(all(c("prevalence", "mean_abundance") %in% names(tab)))
 })
 
-test_that("mp_run_da (wilcox) feeds mp_diff", {
-  ps <- make_test_ps()
-  res <- mp_run_da(ps, group.by = "Group", method = "wilcox")
-  expect_s3_class(res, "data.frame")
-  expect_true(all(c("feature", "log2FC", "pvalue", "padj") %in% names(res)))
-  expect_s3_class(mp_diff(res, plot.type = "volcano"), "ggplot")
-})
-
-test_that("mp_run_da requires two groups", {
-  ps <- make_test_ps()
-  ps3 <- phyloseq::merge_phyloseq(
-    ps,
-    phyloseq::sample_data(
-      data.frame(Site = rep(c("A", "B", "C"), length.out = 12),
-                 row.names = phyloseq::sample_names(ps))))
-  expect_error(mp_run_da(ps3, group.by = "Site", method = "wilcox"),
-               class = "micropubr_need_groups")
-})
-
 test_that("mp_indicator runs when indicspecies is available", {
   skip_if_not_installed("indicspecies")
   skip_if_not_installed("permute")

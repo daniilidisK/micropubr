@@ -63,7 +63,7 @@ mp_taxa <- function(object,
                     interactive = FALSE,
                     return.data = FALSE,
                     verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   plot.type <- match.arg(plot.type)
   group.by <- .mp_check_var(object, group.by, "group.by")
   theme <- .mp_theme(theme, font.size)
@@ -110,9 +110,11 @@ mp_taxa <- function(object,
 
   if (!is.null(group.by) && plot.type %in% c("bar", "area", "bubble",
                                              "heatmap")) {
+    # Narrow panels (few samples) truncate long group names; wrap them.
     p <- p + ggplot2::facet_grid(
       stats::as.formula(paste("~", sprintf("`%s`", group.by))),
-      scales = "free_x", space = "free_x"
+      scales = "free_x", space = "free_x",
+      labeller = ggplot2::label_wrap_gen(width = 10)
     )
   }
 
@@ -121,6 +123,12 @@ mp_taxa <- function(object,
                   caption = caption) +
     theme +
     .mp_rotate_x(levels(agg$Sample), font.size + 1, angle = 90)
+  p <- .mp_tag(p, "mp_taxa",
+               params = list(tax.level = tax.level, plot.type = plot.type,
+                             top.n = top.n, relative = relative,
+                             other.label = other.label, group.by = group.by),
+               data = .mp_data_info(object, group.by),
+               packages = "phyloseq")
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }

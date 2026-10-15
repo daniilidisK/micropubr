@@ -6,7 +6,13 @@
 \alias{mp_reset_defaults}
 \title{Get, set and reset micropubr defaults}
 \usage{
-mp_set_defaults(font.size = NULL, palette = NULL, theme = NULL, verbose = NULL)
+mp_set_defaults(
+  font.size = NULL,
+  palette = NULL,
+  theme = NULL,
+  verbose = NULL,
+  guardrails = NULL
+)
 
 mp_get_defaults()
 
@@ -22,6 +28,16 @@ colours used whenever a function's \code{palette} argument is \code{NULL}.}
 argument is \code{NULL}. If \code{NULL}, \code{\link[=mp_theme_publication]{mp_theme_publication()}} is used.}
 
 \item{verbose}{Logical; print the underlying method and parameters.}
+
+\item{guardrails}{How statistical caveats are reported: \code{"warn"} (the
+default) raises a warning of class \code{micropubr_guardrail}, \code{"caption"}
+appends a "Note:" line to the figure caption, \code{"off"} stays silent. The
+caveats are recorded either way and listed by \code{\link[=mp_methods]{mp_methods()}}. They flag
+group sizes below 5, richness compared across more than 10-fold
+differences in sequencing depth, a significant PERMANOVA accompanied by
+unequal dispersions (PERMDISP), differential-abundance methods that
+ignored the requested covariates, and covariates so strongly associated
+with the grouping that adjusting for them is unstable.}
 }
 \value{
 \code{mp_get_defaults()} returns the current defaults as a named list;

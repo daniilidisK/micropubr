@@ -80,7 +80,7 @@ mp_alpha <- function(object,
                      interactive = FALSE,
                      return.data = FALSE,
                      verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   plot.type <- match.arg(plot.type)
   test <- match.arg(test)
   group.by <- .mp_check_var(object, group.by, "group.by")
@@ -88,10 +88,14 @@ mp_alpha <- function(object,
   theme <- .mp_theme(theme, font.size)
 
   if (plot.type == "rarefaction") {
-    return(.mp_rarefaction(object, group.by = group.by, palette = palette,
-                           theme = theme, plot.title = plot.title,
-                           plot.subtitle = plot.subtitle,
-                           plot.caption = plot.caption, verbose = verbose))
+    p <- .mp_rarefaction(object, group.by = group.by, palette = palette,
+                         theme = theme, plot.title = plot.title,
+                         plot.subtitle = plot.subtitle,
+                         plot.caption = plot.caption, verbose = verbose)
+    return(.mp_tag(p, "mp_alpha",
+                   params = list(plot.type = plot.type, group.by = group.by),
+                   data = .mp_data_info(object, group.by),
+                   packages = "vegan"))
   }
 
   alpha <- .mp_estimate_alpha(object, measure, verbose = verbose)
@@ -100,6 +104,7 @@ mp_alpha <- function(object,
 
   if (isTRUE(return.data)) return(df)
 
+  group0 <- group.by
   if (is.null(group.by)) {
     df[[".all"]] <- "All samples"
     group.by <- ".all"
@@ -142,6 +147,15 @@ mp_alpha <- function(object,
   } else {
     plots
   }
+  out <- .mp_tag(
+    out, "mp_alpha",
+    params = list(measure = measure, plot.type = plot.type, test = test,
+                  add.stats = add.stats, p.adjust.method = p.adjust.method,
+                  group.by = group0),
+    data = .mp_data_info(object, group0),
+    notes = c(if (add.stats) .mp_guard_groups(object, group0),
+              if (!is.null(group0)) .mp_guard_depth(object, measure)),
+    packages = c("phyloseq", if (add.stats) "rstatix"))
   if (isTRUE(interactive)) return(.mp_interactive(out))
   out
 }
@@ -178,7 +192,7 @@ mp_alpha <- function(object,
 #' Faith's phylogenetic diversity via picante (optional)
 #' @noRd
 .mp_faith_pd <- function(object, verbose = FALSE) {
-  .mp_check_phyloseq(object, require_tree = TRUE)
+  object <- .mp_check_phyloseq(object, require_tree = TRUE)
   .mp_require("picante", "Faith's phylogenetic diversity")
   comm <- .mp_otu_matrix(object, samples_as_rows = TRUE)
   tree <- phyloseq::phy_tree(object)

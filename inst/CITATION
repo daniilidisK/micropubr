@@ -1,0 +1,15 @@
+bibentry(
+  bibtype = "Manual",
+  header  = "To cite micropubr in publications use:",
+  title   = paste("{micropubr}: a unified grammar for publication-ready",
+                  "microbiome visualization in {R}"),
+  author  = person("Konstantinos", "Daniilidis"),
+  year    = "2026",
+  note    = paste("R package version", meta$Version),
+  url     = "https://github.com/daniilidisK/micropubr",
+  textVersion = paste0(
+    "Daniilidis K (2026). micropubr: a unified grammar for publication-ready ",
+    "microbiome visualization in R. R package version ", meta$Version, ". ",
+    "https://github.com/daniilidisK/micropubr"
+  )
+)

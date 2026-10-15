@@ -3,10 +3,13 @@
 > Publication-ready microbiome visualizations with one line of code.
 
 <!-- badges: start -->
+[![R-CMD-check](https://github.com/daniilidisK/micropubr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/daniilidisK/micropubr/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/daniilidisK/micropubr/graph/badge.svg)](https://app.codecov.io/gh/daniilidisK/micropubr)
+[![pkgdown](https://github.com/daniilidisK/micropubr/actions/workflows/pkgdown.yaml/badge.svg)](https://daniilidisk.github.io/micropubr/)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 [![R >= 4.1.0](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue.svg)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.2.0-green.svg)](NEWS.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](NEWS.md)
 <!-- badges: end -->
 
 `micropubr` is a unified, opinionated R package for turning a
@@ -39,7 +42,8 @@ and zoom included.
     - [Statistics and ecology](#statistics-and-ecology)
     - [Genomics and quality control](#genomics-and-quality-control)
     - [Infrastructure](#infrastructure)
-  - [Differential abundance, any tool](#differential-abundance-any-tool)
+  - [Differential abundance with several methods](#differential-abundance-with-several-methods)
+  - [Methods text, alt text and statistical guardrails](#methods-text-alt-text-and-statistical-guardrails)
   - [Palettes and theming](#palettes-and-theming)
   - [Package-wide defaults](#package-wide-defaults)
   - [Importing data](#importing-data)
@@ -81,6 +85,18 @@ every paper. `micropubr` collapses each of these into one consistent call:
   them with any layer, theme or scale you like.
 - **`return.data = TRUE` everywhere.** Every function can hand back the tidy
   data frame (and, where relevant, the fitted model) behind the figure.
+- **Differential abundance done carefully.** `mp_run_da()` runs Wilcoxon,
+  covariate-adjusted linear (mixed) models, ANCOM-BC2, DESeq2 and ALDEx2 on one
+  shared design, for two or many groups, and `mp_diff()` shows where they
+  agree.
+- **Figures that write their own methods.** Every figure records what was
+  computed; `mp_methods()` turns that into a methods paragraph with versions
+  and references, and `mp_alt_text()` into accessible alt text.
+- **Statistical guardrails.** Small groups, richness compared across very
+  uneven depths, and a PERMANOVA undermined by unequal dispersions are flagged
+  as they happen.
+- **phyloseq or TreeSummarizedExperiment.** Every function accepts either
+  container, so the `mia` / OMA ecosystem works out of the box.
 
 ## Installation
 
@@ -157,7 +173,7 @@ The circular `circlize`-based figures (`mp_chord()`, `mp_circos()`,
 | `mp_alpha()` | Alpha diversity (box / violin / dot / rarefaction) with tests |
 | `mp_ordination()` | PCoA / NMDS / PCA / RDA / CCA / dbRDA with PERMANOVA |
 | `mp_taxa()` | Composition: bar / area / heatmap / bubble / treemap |
-| `mp_diff()` | Differential abundance: volcano / MA / forest / dot / concordance |
+| `mp_diff()` | Differential abundance: volcano / MA / forest / dot / heatmap / consensus / structural zeros / concordance |
 | `mp_tree()` | Annotated phylogenetic trees (abundance + taxonomy rings) |
 | `mp_network()` | Co-occurrence / correlation networks |
 | `mp_longitudinal()` | Spaghetti / trajectory / alluvial / horizon over time |
@@ -173,7 +189,7 @@ The circular `circlize`-based figures (`mp_chord()`, `mp_circos()`,
 | `mp_prevalence()` | Prevalence–abundance and core-microbiome plots |
 | `mp_indicator()` | Indicator species analysis |
 | `mp_ml()` | Machine learning (random forest / xgboost): importance, ROC, confusion |
-| `mp_run_da()` | Run a differential-abundance method and return tidy results |
+| `mp_run_da()` | Run one or several differential-abundance methods (with covariates, repeated measures and multi-group contrasts) and return one tidy table |
 
 ### Genomics and quality control
 
@@ -184,6 +200,13 @@ The circular `circlize`-based figures (`mp_chord()`, `mp_circos()`,
 | `mp_chord()` | Chord diagram linking top taxa to a grouping variable |
 | `mp_qc_profile()` | Per-cycle FASTQ read-quality profiles (DADA2 truncation) |
 
+### Reporting
+
+| Function | Purpose |
+|---|---|
+| `mp_methods()` | Methods paragraph, software versions, references and statistical notes for a set of figures |
+| `mp_alt_text()` | Accessible alt text describing a figure and its key result |
+
 ### Infrastructure
 
 | Function | Purpose |
@@ -192,22 +215,79 @@ The circular `circlize`-based figures (`mp_chord()`, `mp_circos()`,
 | `mp_export()` | Save static figures (PDF/PNG/…) or interactive widgets (HTML) |
 | `mp_palette()`, `mp_palettes()` | Colourblind-safe qualitative / sequential / diverging palettes |
 | `mp_theme_publication()`, `mp_theme_nature()`, `mp_theme_cell()`, `mp_theme_dark()` | Journal-style themes |
+| `mp_darken()` | Recolour a finished figure for a dark background, keeping its layout |
 | `mp_set_defaults()`, `mp_get_defaults()`, `mp_reset_defaults()` | Package-wide defaults |
 | `mp_import_qiime2()`, `mp_import_dada2()`, `mp_import_biom()`, `mp_import_metaphlan()` | Import to `phyloseq` |
+| `mp_as_phyloseq()` | Convert a `TreeSummarizedExperiment` (accepted directly by every function) |
 | `mp_explore()` | Interactive Shiny explorer that emits reproducible code |
 
-## Differential abundance, any tool
+## Differential abundance with several methods
 
-`mp_diff()` accepts results from `DESeq2`, `ALDEx2` and `ANCOM-BC(2)` directly,
-or any generic data frame. Compare two methods at a glance:
+Differential-abundance methods are known to disagree, and unadjusted tests are
+easily confounded. `mp_run_da()` therefore runs one or several methods on a
+single shared design and returns one long table (`feature`, `contrast`,
+`method`, `log2FC`, `lfcSE`, `pvalue`, `padj`, `robust`, `structural_zero`):
+
+| `method` | Model | Covariates (`adjust`) | Repeated measures (`random`) |
+|---|---|:-:|:-:|
+| `"wilcox"` | Wilcoxon rank-sum on CLR values (default, no extra packages) | – | – |
+| `"lm"` | Linear model on CLR values; mixed model with `random` | ✓ | ✓ (`lmerTest`) |
+| `"ancombc2"` | ANCOM-BC2: bias correction, structural zeros, pseudo-count sensitivity | ✓ | ✓ |
+| `"deseq2"` | DESeq2 Wald test, `poscounts` size factors | ✓ | – |
+| `"aldex2"` | ALDEx2 Welch's t-test on Monte-Carlo CLR instances | – | – |
 
 ```r
-mp_diff(deseq_res, result2 = aldex_res, plot.type = "concordance",
-        method.names = c("DESeq2", "ALDEx2"))
+gp <- phyloseq::subset_samples(GlobalPatterns,
+                               SampleType %in% c("Feces", "Skin", "Tongue"))
+
+# All groups against a reference, three methods on one design
+da <- mp_run_da(gp, group.by = "SampleType", reference = "Skin",
+                method = c("wilcox", "lm", "ancombc2"), tax.level = "Genus")
+
+# With your own metadata: adjust for confounders, model repeated measures
+# mp_run_da(ps, group.by = "Treatment", method = c("lm", "ancombc2"),
+#           adjust = c("Age", "Sex"), random = "Subject")
+
+mp_diff(da, plot.type = "consensus")   # which methods agree, taxon by taxon
+mp_diff(da, plot.type = "heatmap")     # fold changes across contrasts
+mp_diff(da, plot.type = "volcano", contrast = "Feces vs Skin")
+mp_diff(da, plot.type = "zeros")       # ANCOM-BC2 structural zeros
 ```
 
-Use `mp_run_da()` to run a method end-to-end from a `phyloseq` object and hand
-the tidy result straight to `mp_diff()`.
+Fold changes are always log2 (ANCOM-BC2's natural-log estimates are
+converted), and ANCOM-BC2 results that fail its pseudo-count sensitivity
+analysis are not counted as significant unless you pass `robust.only = FALSE`. `mp_diff()` also reads results produced elsewhere — `DESeq2`,
+`ALDEx2`, `ANCOM-BC`/`ANCOM-BC2` objects, any data frame, or a named list of
+them for a consensus or concordance plot:
+
+```r
+mp_diff(list(DESeq2 = deseq_res, ALDEx2 = aldex_res), plot.type = "consensus")
+```
+
+## Methods text, alt text and statistical guardrails
+
+Every figure records the analysis behind it: the tests and their settings,
+transformations, filters, multiple-testing correction, group sizes and package
+versions. `mp_methods()` turns those records into a methods paragraph with
+references, ready to edit into a manuscript; `mp_alt_text()` writes alt text
+for the figure.
+
+```r
+p1 <- mp_alpha(GlobalPatterns, group.by = "SampleType", test = "kruskal")
+p2 <- mp_ordination(GlobalPatterns, group.by = "SampleType")
+mp_methods(p1, p2)                   # or mp_methods() for every figure so far
+mp_methods(p1, p2, format = "markdown")
+mp_alt_text(p2)
+```
+
+While figures are made, micropubr also checks for conditions under which their
+statistics are easy to over-read — groups smaller than five samples, richness
+compared across a more than ten-fold range of sequencing depth, a significant
+PERMANOVA alongside unequal dispersions (PERMDISP), a method that had to ignore
+the covariates you asked for, a covariate so entangled with the grouping that
+adjusting for it is unstable — and warns. The same notes are listed by
+`mp_methods()`; `mp_set_defaults(guardrails = "caption")` writes them into the
+figure caption instead, and `"off"` silences them.
 
 ## Palettes and theming
 
@@ -241,14 +321,18 @@ back, ready for the rest of the family:
 
 ```r
 ps <- mp_import_qiime2(
-  feature.table = "table.qza",
-  taxonomy      = "taxonomy.qza",
-  metadata      = "metadata.tsv"
+  features = "table.qza",
+  taxonomy = "taxonomy.qza",
+  metadata = "metadata.tsv"
 )
 ```
 
 Importers are also provided for DADA2 (`mp_import_dada2()`), BIOM
 (`mp_import_biom()`) and MetaPhlAn (`mp_import_metaphlan()`).
+
+Data already in Bioconductor's `TreeSummarizedExperiment` (for example from
+`mia`) needs no conversion: every `mp_*()` function accepts it directly, and
+`mp_as_phyloseq()` converts it explicitly when you want the `phyloseq` object.
 
 ## Documentation
 

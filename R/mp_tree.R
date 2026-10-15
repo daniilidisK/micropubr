@@ -62,7 +62,7 @@ mp_tree <- function(object,
                     font.size = getOption("micropubr.font.size", 11),
                     interactive = FALSE,
                     verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object, require_tree = TRUE)
+  object <- .mp_check_phyloseq(object, require_tree = TRUE)
   .mp_quiet_phylo(.mp_require("ggtree", "Phylogenetic tree plots", bioc = TRUE))
   layout <- match.arg(layout)
   annotate <- match.arg(annotate, several.ok = TRUE)
@@ -84,6 +84,9 @@ mp_tree <- function(object,
     object, layout, annotate, color.by, group.by, tip.label, tip.label.size,
     highlight.clades, open.angle, palette, theme,
     plot.title, plot.subtitle, plot.caption))
+  p <- .mp_tag(p, "mp_tree", params = list(layout = layout,
+                                          annotate = annotate),
+               data = .mp_data_info(object), packages = "ggtree")
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }

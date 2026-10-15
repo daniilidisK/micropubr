@@ -59,14 +59,22 @@
 }
 
 #' Validate that `object` is a usable phyloseq object
+#'
+#' A `(Tree)SummarizedExperiment` is converted with [mp_as_phyloseq()] first,
+#' so every `mp_*()` function accepts either container. Callers must use the
+#' returned object: `object <- .mp_check_phyloseq(object)`.
 #' @noRd
 .mp_check_phyloseq <- function(object, require_tree = FALSE,
                                arg = "object") {
   .mp_require("phyloseq", "micropubr", bioc = TRUE)
+  if (methods::is(object, "SummarizedExperiment")) {
+    object <- mp_as_phyloseq(object)
+  }
   if (!methods::is(object, "phyloseq") &&
       !methods::is(object, "otu_table")) {
     rlang::abort(
-      sprintf("`%s` must be a phyloseq object, not <%s>.",
+      sprintf(paste("`%s` must be a phyloseq or (Tree)SummarizedExperiment",
+                    "object, not <%s>."),
               arg, class(object)[1]),
       class = "micropubr_bad_input"
     )
@@ -195,25 +203,54 @@
   df <- phyloseq::psmelt(obj)
 
   label_col <- if (!is.null(tax.level)) tax.level else "OTU"
-  raw <- as.character(df[[label_col]])
-  raw[is.na(raw)] <- "Unassigned"
+  raw <- .mp_unassigned_labels(df, label_col, phyloseq::rank_names(obj))
 
-  # Map taxa not in the top set to the "Other" bucket.
-  keep_labels <- unique(as.character(df[[label_col]][df[["OTU"]] %in% keep]))
+  # Map taxa not in the top set to the "Other" bucket. The keep-list is built
+  # from the display labels, so taxa unassigned at this rank stay visible
+  # rather than being folded into "Other".
+  keep_labels <- unique(raw[df[["OTU"]] %in% keep])
   raw[!raw %in% keep_labels] <- other.label
 
   # Order factor by overall abundance, with Other last.
-  lvl_order <- names(.mp_aggregate_abundance(df, label_col))
-  lvl_order <- lvl_order[lvl_order %in% raw]
+  ab <- tapply(df[["Abundance"]], raw, sum, na.rm = TRUE)
+  lvl_order <- names(sort(ab, decreasing = TRUE))
   lvl_order <- c(setdiff(lvl_order, other.label),
                  if (other.label %in% raw) other.label)
   df[[".taxon"]] <- factor(raw, levels = unique(lvl_order))
   df
 }
 
-#' Order taxon labels by descending total abundance (helper for factor levels)
+#' Labels at `label_col`, naming unassigned taxa by their deepest known rank
+#'
+#' A genus-level plot of gut data often has several abundant lineages with no
+#' genus assignment; "Unassigned Lachnospiraceae" and "Unassigned
+#' Ruminococcaceae" are distinct, informative categories, where a single
+#' "Unassigned" would silently merge them.
 #' @noRd
-.mp_aggregate_abundance <- function(df, label_col) {
-  ab <- tapply(df[["Abundance"]], df[[label_col]], sum, na.rm = TRUE)
-  sort(ab, decreasing = TRUE)
+.mp_unassigned_labels <- function(df, label_col, ranks) {
+  raw <- as.character(df[[label_col]])
+  bad <- .mp_no_name(raw)
+  if (!any(bad)) return(raw)
+  above <- if (label_col %in% ranks) {
+    rev(ranks[seq_len(match(label_col, ranks) - 1)])
+  } else character(0)
+  lab <- rep("Unassigned", sum(bad))
+  for (r in above) {
+    if (!r %in% names(df)) next
+    v <- as.character(df[[r]][bad])
+    fill <- lab == "Unassigned" & !.mp_no_name(v)
+    lab[fill] <- paste("Unassigned", v[fill])
+  }
+  raw[bad] <- lab
+  raw
+}
+
+#' Values that are not taxon names: missing, empty, or a pipeline's
+#' placeholder for "not classified" (MGnify's "Root", QIIME's "Unassigned")
+#' @noRd
+.mp_no_name <- function(x) {
+  x <- trimws(as.character(x))
+  is.na(x) | !nzchar(x) |
+    tolower(x) %in% c("root", "unassigned", "unclassified", "unknown", "na",
+                      "none")
 }

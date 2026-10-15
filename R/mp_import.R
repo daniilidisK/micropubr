@@ -142,6 +142,133 @@ mp_import_metaphlan <- function(path, metadata = NULL, level = "Species") {
   ps
 }
 
+#' Convert a (Tree)SummarizedExperiment to a phyloseq object
+#'
+#' Bioconductor's microbiome stack (`mia`, `miaViz`, the OMA book) stores data
+#' in a [TreeSummarizedExperiment][TreeSummarizedExperiment::TreeSummarizedExperiment]
+#' rather than a `phyloseq` object. Every `mp_*()` function calls this
+#' conversion on its input, so either container can be passed directly; it is
+#' exported for when you want the `phyloseq` object itself.
+#'
+#' The count assay becomes the OTU table, `colData()` the sample data, the
+#' taxonomic-rank columns of `rowData()` the taxonomy table and, for a
+#' `TreeSummarizedExperiment`, `rowTree()` the phylogeny (pruned and
+#' relabelled to the rows it links to). Non-atomic `colData()` columns, which
+#' `phyloseq` cannot hold, are dropped.
+#'
+#' @param x A `TreeSummarizedExperiment` or `SummarizedExperiment`; a
+#'   `phyloseq` object is returned unchanged.
+#' @param assay.type Name of the assay holding the counts. Defaults to
+#'   `"counts"` when present, otherwise the first assay.
+#' @return A [phyloseq::phyloseq] object.
+#' @export
+#' @examples
+#' if (requireNamespace("TreeSummarizedExperiment", quietly = TRUE)) {
+#'   counts <- matrix(rpois(40, 20), nrow = 5,
+#'                    dimnames = list(paste0("OTU", 1:5), paste0("S", 1:8)))
+#'   tse <- TreeSummarizedExperiment::TreeSummarizedExperiment(
+#'     assays = list(counts = counts),
+#'     rowData = S4Vectors::DataFrame(Phylum = rep(c("A", "B"), c(2, 3))),
+#'     colData = S4Vectors::DataFrame(Group = rep(c("x", "y"), 4)))
+#'   mp_as_phyloseq(tse)
+#' }
+mp_as_phyloseq <- function(x, assay.type = NULL) {
+  .mp_require("phyloseq", "micropubr", bioc = TRUE)
+  if (methods::is(x, "phyloseq") || methods::is(x, "otu_table")) return(x)
+  if (!methods::is(x, "SummarizedExperiment")) {
+    rlang::abort(
+      sprintf("Cannot convert <%s>; expected a (Tree)SummarizedExperiment.",
+              class(x)[1]),
+      class = "micropubr_bad_input")
+  }
+  .mp_require("SummarizedExperiment", "Converting a SummarizedExperiment",
+              bioc = TRUE)
+  assays <- SummarizedExperiment::assayNames(x)
+  if (is.null(assay.type)) {
+    assay.type <- if ("counts" %in% assays) "counts" else assays[1]
+  }
+  if (!length(assays) || is.na(assay.type) || !assay.type %in% assays) {
+    rlang::abort(
+      c(sprintf("Assay \"%s\" not found.", assay.type %||% ""),
+        i = sprintf("Available assays: %s.",
+                    paste(assays, collapse = ", "))),
+      class = "micropubr_bad_input")
+  }
+
+  counts <- as.matrix(SummarizedExperiment::assay(x, assay.type))
+  if (is.null(rownames(counts))) {
+    rownames(counts) <- paste0("taxon", seq_len(nrow(counts)))
+  }
+  if (is.null(colnames(counts))) {
+    colnames(counts) <- paste0("sample", seq_len(ncol(counts)))
+  }
+  comps <- list(phyloseq::otu_table(counts, taxa_are_rows = TRUE))
+
+  rd <- as.data.frame(SummarizedExperiment::rowData(x))
+  ranks <- .mp_rank_columns(rd)
+  if (length(ranks)) {
+    tt <- as.matrix(data.frame(lapply(rd[, ranks, drop = FALSE],
+                                      as.character),
+                               check.names = FALSE))
+    rownames(tt) <- rownames(counts)
+    comps <- c(comps, list(phyloseq::tax_table(tt)))
+  }
+
+  cd <- SummarizedExperiment::colData(x)
+  atomic <- vapply(cd, is.atomic, logical(1))
+  if (any(atomic)) {
+    sd <- as.data.frame(cd[, atomic, drop = FALSE])
+    rownames(sd) <- colnames(counts)
+    comps <- c(comps, list(phyloseq::sample_data(sd)))
+  }
+
+  tree <- .mp_quiet_phylo(.mp_tse_tree(x, rownames(counts)))
+  if (!is.null(tree)) comps <- c(comps, list(phyloseq::phy_tree(tree)))
+
+  .mp_quiet_phylo(do.call(phyloseq::phyloseq, comps))
+}
+
+#' Taxonomic-rank columns of a rowData table
+#'
+#' Prefers the conventional rank names (as `mia` writes them); otherwise falls
+#' back to every character/factor column.
+#' @noRd
+.mp_rank_columns <- function(rd) {
+  if (!ncol(rd)) return(character(0))
+  known <- c("domain", "kingdom", "phylum", "class", "order", "family",
+             "genus", "species")
+  hit <- names(rd)[tolower(names(rd)) %in% known]
+  if (length(hit)) return(hit)
+  names(rd)[vapply(rd, function(v) is.character(v) || is.factor(v),
+                   logical(1))]
+}
+
+#' The row tree of a TreeSummarizedExperiment, tips relabelled to row names
+#' @noRd
+.mp_tse_tree <- function(x, row_ids) {
+  if (!methods::is(x, "TreeSummarizedExperiment") ||
+      !requireNamespace("TreeSummarizedExperiment", quietly = TRUE)) {
+    return(NULL)
+  }
+  tree <- tryCatch(TreeSummarizedExperiment::rowTree(x),
+                   error = function(e) NULL)
+  if (is.null(tree)) return(NULL)
+  links <- TreeSummarizedExperiment::rowLinks(x)
+  tips <- as.character(links$nodeLab)
+  # Only a one-to-one row-to-tip mapping can be expressed in phyloseq.
+  if (anyNA(tips) || anyDuplicated(tips) ||
+      !all(tips %in% tree$tip.label)) {
+    return(NULL)
+  }
+  drop <- setdiff(tree$tip.label, tips)
+  if (length(drop)) {
+    .mp_require("ape", "Pruning the row tree")
+    tree <- ape::drop.tip(tree, drop)
+  }
+  tree$tip.label <- row_ids[match(tree$tip.label, tips)]
+  tree
+}
+
 #' Merge a metadata file or data frame into a phyloseq object
 #' @noRd
 .mp_attach_metadata <- function(ps, metadata) {

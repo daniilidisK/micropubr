@@ -62,6 +62,7 @@ frame behind the plot, and \code{...} to forward arguments to its primary geom.
 Useful links:
 \itemize{
   \item \url{https://github.com/daniilidisK/micropubr}
+  \item \url{https://daniilidisk.github.io/micropubr/}
   \item Report bugs at \url{https://github.com/daniilidisK/micropubr/issues}
 }
 

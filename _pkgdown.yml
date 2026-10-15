@@ -1,0 +1,143 @@
+url: https://daniilidisk.github.io/micropubr/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    # Okabe-Ito blue, the first colour of every micropubr qualitative palette
+    primary: "#0072B2"
+    link-color: "#0072B2"
+
+home:
+  title: "micropubr: Publication-Ready Microbiome Visualizations"
+  description: >
+    A unified grammar of mp_*() functions that turns a phyloseq object into
+    publication-ready, colourblind-safe microbiome figures with reproducible
+    captions.
+
+navbar:
+  structure:
+    left: [getstarted, articles, reference, news]
+    right: [search, github]
+  components:
+    getstarted:
+      text: Get started
+      href: articles/getting-started.html
+    articles:
+      text: Articles
+      menu:
+      - text: Visualization gallery
+        href: articles/visualization.html
+      - text: Statistics, machine learning and genomics
+        href: articles/stats-ml-genomics.html
+    news:
+      text: News
+      href: news/index.html
+    github:
+      icon: fa-github
+      href: https://github.com/daniilidisK/micropubr
+      aria-label: GitHub
+
+articles:
+- title: Get started
+  navbar: ~
+  contents:
+  - getting-started
+- title: Articles
+  navbar: ~
+  contents:
+  - visualization
+  - stats-ml-genomics
+
+reference:
+- title: Package overview
+  contents:
+  - micropubr-package
+
+- title: Import & data
+  desc: >
+    Read DADA2, QIIME 2, BIOM and MetaPhlAn output (or convert other
+    containers) into a `phyloseq` object.
+  contents:
+  - mp_import_dada2
+  - mp_import_qiime2
+  - mp_import_biom
+  - mp_import_metaphlan
+  - mp_as_phyloseq
+
+- title: Quality control
+  desc: Per-cycle read-quality profiles from FASTQ files or summary tables.
+  contents:
+  - mp_qc_profile
+
+- title: Diversity
+  desc: >
+    Alpha diversity, ordination with PERMANOVA, multivariate dispersion,
+    Mantel tests and variance partitioning.
+  contents:
+  - mp_alpha
+  - mp_ordination
+  - mp_dispersion
+  - mp_mantel
+  - mp_varpart
+
+- title: Composition
+  desc: Taxonomic composition, prevalence / core microbiome and chord diagrams.
+  contents:
+  - mp_taxa
+  - mp_prevalence
+  - mp_chord
+
+- title: Differential abundance & biomarkers
+  desc: >
+    Run and visualise differential-abundance analyses, indicator species and
+    machine-learning biomarker discovery.
+  contents:
+  - mp_run_da
+  - mp_diff
+  - mp_indicator
+  - mp_ml
+
+- title: Networks & phylogeny
+  contents:
+  - mp_network
+  - mp_tree
+
+- title: Longitudinal & function
+  contents:
+  - mp_longitudinal
+  - mp_function
+
+- title: Microbial genomics
+  desc: Genome / contig coverage tracks and circular (Circos-style) genome plots.
+  contents:
+  - mp_coverage
+  - mp_circos
+
+- title: Interactive exploration
+  contents:
+  - mp_explore
+
+- title: Reproducibility & reporting
+  desc: >
+    Methods text, figure alt text, multi-panel assembly and journal-ready
+    export.
+  contents:
+  - mp_methods
+  - mp_alt_text
+  - mp_combine
+  - mp_export
+
+- title: Themes, palettes & options
+  desc: >
+    Journal themes, colourblind-safe palettes and session-wide defaults
+    (`mp_set_defaults()`, `mp_get_defaults()`, `mp_reset_defaults()`).
+  contents:
+  - mp_theme_publication
+  - mp_theme_nature
+  - mp_theme_cell
+  - mp_theme_dark
+  - mp_darken
+  - mp_palette
+  - mp_palettes
+  - mp_set_defaults

@@ -45,7 +45,7 @@ mp_chord <- function(object,
                      directional = 0,
                      title = NULL,
                      verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   group.by <- .mp_check_var(object, group.by, "group.by", required = TRUE)
   .mp_require("circlize", "Chord diagrams")
 

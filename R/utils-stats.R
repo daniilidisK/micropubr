@@ -45,21 +45,49 @@
   if (!is.null(comparisons) && test %in% c("kruskal", "anova")) {
     res <- .mp_filter_comparisons(res, comparisons)
   }
-  # With a single pairwise comparison, wilcox_test()/t_test() return only `p`
-  # (no `p.adj`/`p.adj.signif`); guarantee both columns exist downstream.
-  if (!"p.adj" %in% names(res)) {
-    res <- if ("p" %in% names(res)) {
-      rstatix::adjust_pvalue(res, method = p.adjust.method)
-    } else {
-      transform(res, p.adj = res$p)
-    }
-  }
+  # rstatix rounds these p-values to three significant digits; recompute them
+  # exactly so the multiple-testing adjustment (and the stars) start from the
+  # same numbers stats:: would give. Dunn's test is not rounded.
+  res <- .mp_exact_pairwise_p(res, df, value, group, test, p.adjust.method)
   if (!"p.adj.signif" %in% names(res)) {
     res <- rstatix::add_significance(res, p.col = "p.adj",
                                      output.col = "p.adj.signif")
   }
   res <- rstatix::add_xy_position(res, x = group, fun = "max",
                                   step.increase = step.increase)
+  res
+}
+
+#' Replace rstatix's rounded pairwise p-values with exact ones
+#'
+#' Wilcoxon and t-test p-values are recomputed with stats:: and re-adjusted;
+#' Tukey HSD adjusted p-values are taken from stats::TukeyHSD(). The
+#' significance stars are then rebuilt from the exact values.
+#' @noRd
+.mp_exact_pairwise_p <- function(res, df, value, group, test,
+                                 p.adjust.method) {
+  if (!nrow(res) || test == "kruskal") {
+    if (!"p.adj" %in% names(res)) res$p.adj <- res$p
+    return(res)
+  }
+  if (test == "anova") {
+    tk <- stats::TukeyHSD(stats::aov(
+      stats::as.formula(sprintf("`%s` ~ `%s`", value, group)), data = df))[[1]]
+    key <- paste(res$group2, res$group1, sep = "-")
+    hit <- match(key, rownames(tk))
+    res$p.adj[!is.na(hit)] <- tk[hit[!is.na(hit)], "p adj"]
+  } else {
+    res$p <- unname(mapply(function(a, b) {
+      x <- df[[value]][df[[group]] == a]
+      y <- df[[value]][df[[group]] == b]
+      tryCatch(
+        if (test == "t.test") stats::t.test(x, y)$p.value else
+          suppressWarnings(stats::wilcox.test(x, y)$p.value),
+        error = function(e) NA_real_)
+    }, as.character(res$group1), as.character(res$group2)))
+    res$p.adj <- stats::p.adjust(res$p, method = p.adjust.method)
+  }
+  res$p.adj.signif <- NULL
   res
 }
 
@@ -89,20 +117,22 @@
   ng <- nlevels(df[[group]])
   if (ng < 2 || stats::sd(df[[value]], na.rm = TRUE) == 0) return(NULL)
   f <- stats::as.formula(sprintf("`%s` ~ `%s`", value, group))
-  # Degenerate inputs can still trip the underlying tests; fail soft to NULL.
+  # stats:: rather than rstatix, which rounds p to three significant digits
+  # before it is formatted. Degenerate inputs can still trip the tests; fail
+  # soft to NULL.
   tryCatch({
     if (ng == 2) {
       label <- switch(test, "t.test" = "t-test", "Wilcoxon")
-      res <- if (test == "t.test") rstatix::t_test(df, f) else
-        rstatix::wilcox_test(df, f)
-      return(sprintf("%s, p = %s", label, format.pval(res$p[1], digits = 2)))
+      p <- if (test == "t.test") stats::t.test(f, data = df)$p.value else
+        suppressWarnings(stats::wilcox.test(f, data = df)$p.value)
+      return(sprintf("%s, p = %s", label, format.pval(p, digits = 2)))
     }
     if (test == "anova") {
-      res <- rstatix::anova_test(df, f)
-      sprintf("ANOVA, p = %s", format.pval(res$p[1], digits = 2))
+      p <- summary(stats::aov(f, data = df))[[1]][["Pr(>F)"]][1]
+      sprintf("ANOVA, p = %s", format.pval(p, digits = 2))
     } else {
-      res <- rstatix::kruskal_test(df, f)
-      sprintf("Kruskal-Wallis, p = %s", format.pval(res$p[1], digits = 2))
+      p <- stats::kruskal.test(f, data = df)$p.value
+      sprintf("Kruskal-Wallis, p = %s", format.pval(p, digits = 2))
     }
   }, error = function(e) NULL)
 }

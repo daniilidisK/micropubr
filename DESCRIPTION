@@ -1,6 +1,6 @@
 Package: micropubr
 Title: Publication-Ready Microbiome Visualizations
-Version: 0.2.0
+Version: 0.3.0
 Authors@R:
     person("Konstantinos", "Daniilidis", , "daniilidis@ieee.org", role = c("aut", "cre"))
 Description: A unified, opinionated interface for generating publication-ready
@@ -11,8 +11,13 @@ Description: A unified, opinionated interface for generating publication-ready
     differential abundance, phylogenetic trees, co-occurrence networks and
     longitudinal analyses. Every function returns a 'ggplot2' object with
     colourblind-safe defaults, automatic statistical overlays and
-    auto-generated, reproducible figure captions.
-License: MIT
+    auto-generated, reproducible figure captions. Differential abundance can
+    be tested with several methods at once (including covariate-adjusted
+    linear models and 'ANCOM-BC2') and summarised as a consensus, every
+    figure records its provenance so that a methods paragraph and alt text
+    can be generated from it, and 'TreeSummarizedExperiment' objects are
+    accepted wherever 'phyloseq' objects are.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -59,6 +64,9 @@ Suggests:
     IRanges,
     DESeq2,
     ANCOMBC,
+    lme4,
+    lmerTest,
+    S4Vectors,
     ALDEx2,
     SpiecEasi,
     qiime2R,
@@ -73,7 +81,8 @@ Suggests:
     vdiffr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/daniilidisK/micropubr
+URL: https://github.com/daniilidisK/micropubr,
+    https://daniilidisk.github.io/micropubr/
 BugReports: https://github.com/daniilidisK/micropubr/issues
 LazyData: true
 biocViews: Microbiome, Metagenomics, Visualization, Sequencing

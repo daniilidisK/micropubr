@@ -85,7 +85,7 @@ mp_ml <- function(object,
                   interactive = FALSE,
                   return.data = FALSE,
                   verbose = getOption("micropubr.verbose", FALSE)) {
-  .mp_check_phyloseq(object)
+  object <- .mp_check_phyloseq(object)
   method <- match.arg(method)
   task <- match.arg(task)
   transform <- match.arg(transform)
@@ -163,6 +163,16 @@ mp_ml <- function(object,
   )
   p <- p + ggplot2::labs(title = plot.title, subtitle = plot.subtitle,
                          caption = caption)
+  p <- .mp_tag(p, "mp_ml",
+               params = list(method = method, task = task,
+                             group.by = group.by, tax.level = tax.level,
+                             transform = transform, plot.type = plot.type,
+                             cv.folds = cv.folds, ntree = ntree,
+                             nrounds = nrounds),
+               data = .mp_data_info(object, if (task == "classification")
+                 group.by),
+               packages = c(if (method == "rf") "randomForest" else "xgboost",
+                            if (plot.type == "roc") "pROC"))
   if (isTRUE(interactive)) return(.mp_interactive(p))
   p
 }
