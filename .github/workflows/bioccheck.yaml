@@ -23,7 +23,7 @@ jobs:
       _R_CHECK_FORCE_SUGGESTS_: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -59,7 +59,7 @@ jobs:
 
       - name: Upload BiocCheck report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bioccheck-report
           path: '**/*.BiocCheck'
