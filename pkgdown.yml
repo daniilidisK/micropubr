@@ -1,0 +1,11 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  getting-started: getting-started.html
+  stats-ml-genomics: stats-ml-genomics.html
+  visualization: visualization.html
+last_built: 2026-10-15T20:03Z
+urls:
+  reference: https://daniilidisk.github.io/micropubr/reference
+  article: https://daniilidisk.github.io/micropubr/articles
