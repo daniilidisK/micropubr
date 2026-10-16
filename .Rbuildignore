@@ -1,8 +1,5 @@
 ^.*\.Rproj$
-^\.Rproj\.user$
-^\.github$
-^\.claude$
-^\.DS_Store$
+^\..*$
 \.DS_Store$
 ^_pkgdown\.yml$
 ^pkgdown$
