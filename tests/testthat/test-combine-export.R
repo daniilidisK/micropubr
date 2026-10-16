@@ -36,3 +36,13 @@ test_that("mp_export column presets set width without error", {
   expect_silent(suppressMessages(mp_export(p, f, column = "single")))
   expect_true(file.exists(f))
 })
+
+test_that("mp_export writes PDF and EPS without cairo (macOS sans XQuartz)", {
+  local_mocked_bindings(.mp_has_cairo = function() FALSE)
+  p <- mp_taxa(make_test_ps(), tax.level = "Phylum")
+  for (ext in c(".pdf", ".eps")) {
+    f <- tempfile(fileext = ext)
+    expect_silent(suppressMessages(mp_export(p, f, column = "single")))
+    expect_gt(file.size(f), 0)
+  }
+})

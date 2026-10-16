@@ -23,7 +23,11 @@ self-contained \code{.html} page instead.}
 
 \item{filename}{Output path. For static plots the extension selects the
 device (\code{.pdf}, \code{.png}, \code{.tiff}, \code{.svg}, \code{.eps}, \code{.jpg}); for an
-interactive widget it must be \code{.html}.}
+interactive widget it must be \code{.html}. PDF and EPS files are written with
+the cairo devices, which embed fonts and support Unicode. Where cairo
+cannot be loaded (on macOS it needs XQuartz), PDFs are written with the
+Quartz device on macOS and \code{\link[grDevices:pdf]{grDevices::pdf()}} elsewhere, and EPS files
+with \code{\link[grDevices:postscript]{grDevices::postscript()}}.}
 
 \item{width, height}{Dimensions in \code{units}. If \code{column} is set, \code{width} is
 taken from the preset; if \code{height} is \code{NULL} it defaults to

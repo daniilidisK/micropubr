@@ -15,7 +15,11 @@
 #'   self-contained `.html` page instead.
 #' @param filename Output path. For static plots the extension selects the
 #'   device (`.pdf`, `.png`, `.tiff`, `.svg`, `.eps`, `.jpg`); for an
-#'   interactive widget it must be `.html`.
+#'   interactive widget it must be `.html`. PDF and EPS files are written with
+#'   the cairo devices, which embed fonts and support Unicode. Where cairo
+#'   cannot be loaded (on macOS it needs XQuartz), PDFs are written with the
+#'   Quartz device on macOS and [grDevices::pdf()] elsewhere, and EPS files
+#'   with [grDevices::postscript()].
 #' @param width,height Dimensions in `units`. If `column` is set, `width` is
 #'   taken from the preset; if `height` is `NULL` it defaults to
 #'   `width * 0.75`.
@@ -63,11 +67,13 @@ mp_export <- function(plot,
   if (is.null(height)) height <- width * 0.75
 
   ext <- tolower(tools::file_ext(filename))
+  # NULL lets ggsave infer the device from the extension (png/tiff/jpeg/svg,
+  # and its base pdf/postscript devices when cairo is unavailable).
   device <- format %||% switch(
     ext,
-    pdf = grDevices::cairo_pdf,
-    eps = grDevices::cairo_ps,
-    NULL  # let ggsave infer png/tiff/jpeg/svg from the extension
+    pdf = .mp_pdf_device(),
+    eps = if (.mp_has_cairo()) grDevices::cairo_ps,
+    NULL
   )
 
   args <- list(filename = filename, plot = plot, width = width,
@@ -80,6 +86,44 @@ mp_export <- function(plot,
                           filename, width, height, units, dpi))
   }
   invisible(filename)
+}
+
+#' PDF device: cairo when it loads, else Quartz on macOS, else ggsave's pdf()
+#' @noRd
+.mp_pdf_device <- function() {
+  if (.mp_has_cairo()) return(grDevices::cairo_pdf)
+  if (isTRUE(capabilities("aqua"))) {
+    return(function(filename, ...) {
+      grDevices::quartz(type = "pdf", file = filename, ...)
+    })
+  }
+  NULL
+}
+
+#' Can the cairo devices be opened?
+#'
+#' `capabilities("cairo")` only reports that R was built with cairo. On macOS
+#' the cairo module links against XQuartz, and without it `cairo_pdf()` warns
+#' and writes nothing, so open a device once per session to find out.
+#' @noRd
+.mp_has_cairo <- function() {
+  if (!is.null(.micropubr_state$cairo)) return(.micropubr_state$cairo)
+  ok <- isTRUE(capabilities("cairo"))
+  if (ok) {
+    old <- grDevices::dev.cur()
+    f <- tempfile(fileext = ".pdf")
+    ok <- tryCatch({
+      suppressWarnings(grDevices::cairo_pdf(f))
+      grDevices::dev.cur() != old
+    }, error = function(e) FALSE)
+    if (ok) {
+      grDevices::dev.off()
+      if (old > 1) grDevices::dev.set(old)
+    }
+    unlink(f)
+  }
+  .micropubr_state$cairo <- ok
+  ok
 }
 
 #' Save an interactive plotly widget as a self-contained HTML page

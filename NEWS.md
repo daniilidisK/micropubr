@@ -53,6 +53,9 @@
   `ape::pcoa()` and `phyloseq`, so labels match when negative eigenvalues occur.
 * `mp_dispersion()` rotates long group labels, and `mp_taxa()` wraps long facet
   labels instead of truncating them.
+* `mp_export()` wrote no PDF or EPS file on macOS without XQuartz, because the
+  cairo devices it used need XQuartz there. It now falls back to the Quartz
+  PDF device on macOS and to `pdf()`/`postscript()` elsewhere.
 * README: the `mp_import_qiime2()` example used a non-existent argument.
 
 ## Reporting and reproducibility
