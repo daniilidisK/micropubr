@@ -73,6 +73,12 @@
   rotates long group labels, and
   [`mp_taxa()`](https://daniilidisk.github.io/micropubr/reference/mp_taxa.md)
   wraps long facet labels instead of truncating them.
+- [`mp_export()`](https://daniilidisk.github.io/micropubr/reference/mp_export.md)
+  wrote no PDF or EPS file on macOS without XQuartz, because the cairo
+  devices it used need XQuartz there. It now falls back to the Quartz
+  PDF device on macOS and to
+  [`pdf()`](https://rdrr.io/r/grDevices/pdf.html)/[`postscript()`](https://rdrr.io/r/grDevices/postscript.html)
+  elsewhere.
 - README: the
   [`mp_import_qiime2()`](https://daniilidisk.github.io/micropubr/reference/mp_import_qiime2.md)
   example used a non-existent argument.

@@ -80,7 +80,11 @@ self-contained <code>.html</code> page instead.</p></dd>
 <dt id="arg-filename">filename<a class="anchor" aria-label="anchor" href="#arg-filename"></a></dt>
 <dd><p>Output path. For static plots the extension selects the
 device (<code>.pdf</code>, <code>.png</code>, <code>.tiff</code>, <code>.svg</code>, <code>.eps</code>, <code>.jpg</code>); for an
-interactive widget it must be <code>.html</code>.</p></dd>
+interactive widget it must be <code>.html</code>. PDF and EPS files are written with
+the cairo devices, which embed fonts and support Unicode. Where cairo
+cannot be loaded (on macOS it needs XQuartz), PDFs are written with the
+Quartz device on macOS and <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">grDevices::pdf()</a></code> elsewhere, and EPS files
+with <code><a href="https://rdrr.io/r/grDevices/postscript.html" class="external-link">grDevices::postscript()</a></code>.</p></dd>
 
 
 <dt id="arg-width-height">width, height<a class="anchor" aria-label="anchor" href="#arg-width-height"></a></dt>

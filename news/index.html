@@ -67,6 +67,8 @@
 <li>PCoA axis percentages are now relative to the sum of all eigenvalues, as in <code><a href="https://rdrr.io/pkg/ape/man/pcoa.html" class="external-link">ape::pcoa()</a></code> and <code>phyloseq</code>, so labels match when negative eigenvalues occur.</li>
 <li>
 <code><a href="../reference/mp_dispersion.html">mp_dispersion()</a></code> rotates long group labels, and <code><a href="../reference/mp_taxa.html">mp_taxa()</a></code> wraps long facet labels instead of truncating them.</li>
+<li>
+<code><a href="../reference/mp_export.html">mp_export()</a></code> wrote no PDF or EPS file on macOS without XQuartz, because the cairo devices it used need XQuartz there. It now falls back to the Quartz PDF device on macOS and to <code><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf()</a></code>/<code><a href="https://rdrr.io/r/grDevices/postscript.html" class="external-link">postscript()</a></code> elsewhere.</li>
 <li>README: the <code><a href="../reference/mp_import_qiime2.html">mp_import_qiime2()</a></code> example used a non-existent argument.</li>
 </ul></div>
 <div class="section level3">

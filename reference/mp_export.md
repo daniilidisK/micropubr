@@ -35,7 +35,13 @@ mp_export(
 
   Output path. For static plots the extension selects the device
   (`.pdf`, `.png`, `.tiff`, `.svg`, `.eps`, `.jpg`); for an interactive
-  widget it must be `.html`.
+  widget it must be `.html`. PDF and EPS files are written with the
+  cairo devices, which embed fonts and support Unicode. Where cairo
+  cannot be loaded (on macOS it needs XQuartz), PDFs are written with
+  the Quartz device on macOS and
+  [`grDevices::pdf()`](https://rdrr.io/r/grDevices/pdf.html) elsewhere,
+  and EPS files with
+  [`grDevices::postscript()`](https://rdrr.io/r/grDevices/postscript.html).
 
 - width, height:
 
